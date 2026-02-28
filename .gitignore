@@ -1,0 +1,8 @@
+.vscode
+node_modules
+dist
+package-lock.json
+pnpm-lock.yaml
+packages/tools/i18n/output/*
+auto-imports.d.ts
+components.d.ts

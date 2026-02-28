@@ -1,0 +1,58 @@
+.static {
+  position: static;
+}
+
+.relative {
+  position: relative;
+}
+
+.fixed {
+  position: fixed;
+}
+
+.absolute {
+  position: absolute;
+}
+
+.sticky {
+  position: sticky;
+}
+
+.position-t {
+  top: 0;
+}
+
+.position-l {
+  left: 0;
+}
+
+.position-b {
+  bottom: 0;
+}
+
+.position-r {
+  right: 0;
+}
+
+.position-center {
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.position-x-center {
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+.position-y-center {
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.position-fill {
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}

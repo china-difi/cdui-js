@@ -1,0 +1,46 @@
+.carousel {
+  display: flex;
+  overflow: hidden;
+  user-select: none;
+}
+
+.carousel-backward,
+.carousel-forward {
+  display: block;
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 36px;
+  height: 36px;
+  border-radius: 36px;
+  padding: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  cursor: pointer;
+}
+
+.carousel-backward {
+  left: 12px;
+}
+
+.carousel-forward {
+  right: 12px;
+}
+
+.le-800 .carousel-backward,
+.le-800 .carousel-forward {
+  display: none;
+}
+
+.carousel-dot {
+  display: inline-block;
+  width: 6px;
+  height: 6px;
+  border-radius: 10px;
+  margin: 0 2px;
+  background: rgba(65, 72, 90, 1);
+}
+
+.carousel-dot.selected {
+  width: 16px;
+  background: white;
+}

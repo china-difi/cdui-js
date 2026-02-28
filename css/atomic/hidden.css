@@ -1,0 +1,37 @@
+.hidden {
+  display: none;
+}
+
+.hover:hover .hidden-hover,
+.hidden-hover:hover {
+  display: none;
+}
+
+.active:active .hidden-active,
+.hidden-active:active {
+  display: none;
+}
+
+.selected .hidden-selected,
+.hidden-selected.selected {
+  display: none;
+}
+
+.no-hidden {
+  display: unset;
+}
+
+.hover:hover .no-hidden-hover,
+.no-hidden-hover:hover {
+  display: unset;
+}
+
+.active:active .no-hidden-active,
+.no-hidden-active:active {
+  display: unset;
+}
+
+.selected .no-hidden-selected,
+.no-hidden-selected.selected {
+  display: unset;
+}

@@ -1,0 +1,58 @@
+.combobox {
+  position: relative;
+  width: 100px;
+  height: 32px;
+  border: 1px solid silver;
+  background: white;
+  overflow: visible;
+}
+
+.combobox-host {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 100%;
+  height: 100%;
+}
+
+.combobox-host > input {
+  flex: auto;
+  width: 100%;
+  height: 100%;
+  outline: none;
+  padding: 0 4px;
+  background: inherit;
+  color: inherit;
+  vertical-align: top;
+  font-size: inherit;
+}
+
+.combobox-host > svg {
+  display: flex;
+  justify-items: center;
+  align-items: center;
+  padding: 0 3px;
+  stroke: inherit;
+  fill: inherit;
+  cursor: pointer;
+}
+
+.combobox-popup {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  width: auto;
+  z-index: 100;
+  will-change: height;
+  transition: height 0.2s linear;
+}
+
+.combobox-popup-top {
+  top: auto;
+  bottom: calc(100% + 4px);
+}
+
+.combobox-popup-right {
+  left: auto;
+  right: 0;
+}

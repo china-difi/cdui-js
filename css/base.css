@@ -1,0 +1,16 @@
+img {
+  -webkit-user-drag: none;
+  user-drag: none;
+}
+
+/* 隐藏滚动条 */
+.scrollbar-hidden {
+  scrollbar-width: none;
+}
+
+/* Chrome/Safari/Opera */
+.scrollbar-hidden::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}

@@ -1,0 +1,16 @@
+/**
+ * @link https://www.typescriptlang.org/tsconfig
+ * @link https://cn.vuejs.org/guide/typescript/overview#configuring-tsconfig-json
+ * @link https://cn.vite.dev/guide/features#typescript-compiler-options
+ */
+{
+  "compilerOptions": {
+    "target": "esnext",
+    "jsx": "preserve",
+    "jsxImportSource": "solid-js",
+    "moduleResolution": "bundler",
+    "module": "esnext",
+    "paths": {
+    }
+  }
+}
