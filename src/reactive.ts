@@ -8,7 +8,7 @@ export interface ServerContext {
   /**
    * 异步等待集合
    */
-  promises: Promise<any>[];
+  promises: any[];
   /**
    * 已经获取的异步缓存
    */
@@ -32,6 +32,36 @@ let serverContext: ServerContext;
 export const setServerContext = (context: ServerContext) => {
   serverContext = context;
 };
+
+/**
+ * 服务端渲染页面配置
+ */
+export interface SSRRenderPage {
+  /**
+   * 页面路径
+   */
+  path: string;
+
+  /**
+   * 搜索
+   */
+  search?: string;
+
+  /**
+   * 页面 title 集合，(key 为语言代码)
+   */
+  title?: string;
+
+  /**
+   * 页面描述集合，(key 为语言代码)
+   */
+  description?: string;
+
+  /**
+   * 出现异常时是否终止渲染（渲染终止）
+   */
+  abort?: boolean;
+}
 
 class ReactiveArray {}
 

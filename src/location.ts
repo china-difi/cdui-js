@@ -62,7 +62,7 @@ export const location: Location = reactive({
 });
 
 export const parseQuery = (search: string) => {
-  let query = {};
+  let query: any = {};
   let items = search.slice(1).split('&');
   let item;
 
@@ -95,12 +95,12 @@ export const parseQuery = (search: string) => {
  */
 export const updateURL = (path: string, search?: string, hash?: string) => {
   location.url = path + (search || '') + (hash || '');
-  location.hash = hash;
+  location.hash = hash || '';
 
   if (location.path !== path || location.search !== search) {
     location.path = path;
     location.paths = path.match(/\/[^/]*/g) || [];
-    location.search = search;
+    location.search = search || '';
     location.query = search ? parseQuery(search) : {};
   }
 };

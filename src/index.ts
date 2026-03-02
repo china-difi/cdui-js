@@ -35,34 +35,4 @@ export * from './components/Carousel';
 export * from './components/KeepAlive';
 export * from './components/Dialog';
 
-declare global {
-  export interface ImportMeta {
-    // 配置环境变量类型
-    env: {
-      /**
-       * 应用运行模式
-       */
-      MODE: string;
-
-      /**
-       * 是否服务端渲染
-       */
-      SSR: boolean;
-
-      /**
-       * 是否浏览器模式
-       */
-      VITE_BROWSER: boolean;
-
-      /**
-       * API基础路径
-       */
-      VITE_API_BASE_URL: string;
-
-      /**
-       * 是否开启 API Mock
-       */
-      VITE_API_MOCK: boolean;
-    };
-  }
-}
+export * from './ssr/render';
