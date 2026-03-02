@@ -2,12 +2,12 @@ import fs from 'fs';
 import path from 'path';
 
 /**
- * 从指定 svg 文件读取 symbol 内容
+ * 从指定 svg 文件加载 symbol 内容
  *
  * @param svgFile 指定 svg 文件
  * @param removeColor 去色标记 fill: 去填充色  stroke：去描边色  both：都去
  */
-export const readIconFile = (svgFile: string, removeColor?: 'fill' | 'stroke' | 'both'): string => {
+export const loadIconFile = (svgFile: string, removeColor?: 'fill' | 'stroke' | 'both'): string => {
   let name = path.basename(svgFile).replace('.svg', '');
   let svg = fs.readFileSync(svgFile, 'utf8');
   let index = svg.indexOf(' viewBox="');
@@ -46,7 +46,7 @@ export const readIconFile = (svgFile: string, removeColor?: 'fill' | 'stroke' | 
  * @param svgDirectory 指定 svg 目录
  * @param removeColor 去色标记 fill: 去填充色  stroke：去描边色  both：都去
  */
-export const readIconsDirectory = (svgDirectory: string, removeColor?: 'fill' | 'stroke' | 'both'): string => {
+export const loadIconsDirectory = (svgDirectory: string, removeColor?: 'fill' | 'stroke' | 'both'): string => {
   const outputs = [];
   const files = fs.readdirSync(svgDirectory);
 
@@ -54,7 +54,7 @@ export const readIconsDirectory = (svgDirectory: string, removeColor?: 'fill' | 
     let file = path.join(svgDirectory, files[i]);
 
     if (path.extname(file) === '.svg') {
-      outputs.push(readIconFile(file, removeColor));
+      outputs.push(loadIconFile(file, removeColor));
     }
   }
 
@@ -62,12 +62,12 @@ export const readIconsDirectory = (svgDirectory: string, removeColor?: 'fill' | 
 };
 
 /**
- * 把图标 symbol 内容写入 html 文件
+ * 把图标 symbol 内容保存到 html 文件中
  *
  * @param htmlFile html 文件路径
  * @param symbols 图标 symbol 集合
  */
-export const writeIconsToHtml = (htmlFile: string, symbols: string) => {
+export const saveIconsToHtml = (htmlFile: string, symbols: string) => {
   let html = fs.readFileSync(htmlFile, 'utf8');
   let index = html.indexOf('<svg id="ICONS" ');
 
@@ -91,12 +91,12 @@ export const writeIconsToHtml = (htmlFile: string, symbols: string) => {
 };
 
 /**
- * 写 svg 图标到模块文件
+ * 把 svg 图标保存到模块文件中
  *
  * @param moduleFile 模块文件名
  * @param symbols svg 图标内容
  */
-export const writeIconsModule = (moduleFile: string, symbols: string) => {
+export const saveIconsModule = (moduleFile: string, symbols: string) => {
   fs.writeFileSync(
     moduleFile,
     `import { loadSvgIcons } from 'cdui-js';

@@ -10,7 +10,7 @@ export interface SwitchProps {
      */
     component: () => JSX.Element;
     /**
-     * 捉拿
+     * 缓存 key
      */
     keepalive?: string;
   };

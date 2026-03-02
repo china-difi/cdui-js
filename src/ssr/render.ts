@@ -144,32 +144,35 @@ export const renderSSRPages = async (
   template: string,
   pages: SSRRenderPage[],
 ) => {
-  for (let i = 0, l = pages.length; i < l; i++) {
-    let page = pages[i];
+  // @ts-ignore
+  if (import.meta.env.SSR) {
+    for (let i = 0, l = pages.length; i < l; i++) {
+      let page = pages[i];
 
-    try {
-      let now = Date.now();
+      try {
+        let now = Date.now();
 
-      console.log(`rendering：${language} ${page.path}`);
+        console.log(`rendering：${language} ${page.path}`);
 
-      await renderPage(App, languages, language, root, template, page);
+        await renderPage(App, languages, language, root, template, page);
 
-      console.log(`rendered: ${language} ${page.path}  time: ${Date.now() - now}`);
-    } catch (err) {
-      console.error(err);
-      SSR_ERRORS.push(err.message + ': ' + (err.cause || { message: '...' }).message);
+        console.log(`rendered: ${language} ${page.path}  time: ${Date.now() - now}`);
+      } catch (err) {
+        console.error(err);
+        SSR_ERRORS.push(err.message + ': ' + (err.cause || { message: '...' }).message);
 
-      // 页面渲染失败终止渲染
-      if (page.abort) {
-        break;
+        // 页面渲染失败终止渲染
+        if (page.abort) {
+          break;
+        }
       }
     }
-  }
 
-  if (SSR_ERRORS[0]) {
-    return Promise.reject({
-      language,
-      errors: SSR_ERRORS,
-    });
+    if (SSR_ERRORS[0]) {
+      return Promise.reject({
+        language,
+        errors: SSR_ERRORS,
+      });
+    }
   }
 };
