@@ -10,9 +10,9 @@ export interface SwitchProps {
      */
     component: () => JSX.Element;
     /**
-     * 缓存 key
+     * 缓存 id
      */
-    keepalive?: string;
+    id?: string;
   };
 }
 
@@ -30,14 +30,14 @@ export const Switch = (props: SwitchProps) => {
 
   return createMemo(() => {
     let branch = props.case;
-    let keepalive;
+    let id;
 
     if (branch) {
-      if ((keepalive = branch.keepalive)) {
+      if ((id = branch.id)) {
         return (
-          roots[keepalive] ||
-          (roots[keepalive] = createRoot((dispose) => {
-            disposes[keepalive] = dispose;
+          roots[id] ||
+          (roots[id] = createRoot((dispose) => {
+            disposes[id] = dispose;
             return branch.component();
           }))
         );
