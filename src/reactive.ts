@@ -127,8 +127,7 @@ export const watch = <T extends unknown>(deps: () => T, callbackFn: (values: T) 
   createEffect(() => {
     // 已经初始化
     if (initialized) {
-      // 不收集依赖的情况下执行回调
-      untrack(() => callbackFn(deps()));
+      callbackFn(deps());
     } else {
       // 回集依赖
       deps();
@@ -171,6 +170,7 @@ export const createFetcher = <T>(promise?: () => Promise<T>, ssr_cache?: string)
   let data;
 
   if (promise) {
+    // @ts-ignore
     if (import.meta.env.SSR) {
       let id = createUniqueId();
 
