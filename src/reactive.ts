@@ -2,6 +2,7 @@ import { Component, createEffect, createSignal, createUniqueId, lazy, untrack } 
 
 export const defineProperty = Object.defineProperty;
 export const defineProperties = Object.defineProperties;
+export const create = Object.create;
 export const isArray = Array.isArray;
 
 export interface ServerContext {
@@ -63,56 +64,170 @@ export interface SSRRenderPage {
   abort?: boolean;
 }
 
-class ReactiveArray {}
+const proxyMap = new WeakMap();
+
+const arrayMutationMethods = (() => {
+  let names = ['push', 'pop', 'shift', 'unshift', 'splice', 'sort', 'reverse', 'fill', 'copyWithin'];
+  let result = Object.create(null);
+
+  for (let i = 0, l = names.length; i < l; i++) {
+    result[names[i]] = 1;
+  }
+
+  return result;
+})();
+
+function arrayProxyGetHandler(target: any, property: any, receiver) {
+  let index = typeof property === 'string' && +property;
+  let value = target[property];
+
+  // 拦截索引访问
+  if (index >= 0) {
+    if (typeof value !== 'object' || !value) {
+      return value;
+    }
+
+    // 已经是代理对象
+    if (value.__raw__) {
+      return value;
+    }
+
+    return proxyMap.get(value) || (isArray(value) ? createArraySignal(value)[0]() : reactiveObject(value));
+  }
+
+  if (property === '__raw__') {
+    return target;
+  }
+
+  if (typeof value === 'function') {
+    if (arrayMutationMethods[property]) {
+      let handler = this;
+      let set = handler.fn;
+
+      return function () {
+        let array = target.slice(0);
+        let result = value.apply(array, arguments);
+
+        // 返回的不是对象
+        if (result !== array) {
+          set(new Proxy(array, handler));
+          return result;
+        }
+
+        let proxy = new Proxy(array, handler);
+
+        set(proxy);
+        return proxy;
+      };
+    }
+
+    return value.bind(receiver);
+  }
+
+  // 其他属性正常返回
+  return value;
+}
+
+function arrayProxySetHandler(target: any, property: any, value, receiver) {
+  let index = typeof property === 'string' && +property;
+
+  // 如果是通过索引设置值
+  if (property >= 0) {
+    target = target.slice(0);
+    target[index] = value;
+
+    this.fn(new Proxy(target, this));
+    return true;
+  }
+
+  // 如果设置的是length属性
+  if (property === 'length') {
+    if (target.length !== value) {
+      target = target.slice(0);
+      target.length = value;
+
+      this.fn(new Proxy(target, this));
+      return true;
+    }
+
+    return true;
+  }
+
+  return Reflect.set(target, property, value, receiver);
+}
+
+const createArraySignal = (value: any[]) => {
+  let handler = { get: arrayProxyGetHandler, set: arrayProxySetHandler, fn: null };
+  let proxy = new Proxy(value, handler);
+  let signal = createSignal(proxy);
+
+  handler.fn = signal[1];
+
+  return signal;
+};
+
+const initSignal = (signals, property, value) => {
+  return (signals[property] =
+    typeof value !== 'object' || !isArray(value) ? createSignal(value) : createArraySignal(value));
+};
+
+const reactiveObject = (object) => {
+  const signals = create(null);
+
+  const proxy = new Proxy(object, {
+    get(target, property, receiver) {
+      if (property !== '__raw__') {
+        return (signals[property] || initSignal(signals, property, target[property]))[0]();
+      }
+
+      return target;
+    },
+
+    set(target, property, value, receiver) {
+      if (value && typeof value === 'object') {
+        value = value.__raw__ || value;
+      }
+
+      (signals[property] || initSignal(signals, property, target[property]))[1](value);
+      return true;
+    },
+
+    deleteProperty() {
+      console.error('Cannot delete reactive object property');
+      return false;
+    },
+  });
+
+  proxyMap.set(object, proxy);
+  return proxy;
+};
 
 /**
  * 创建响应式对象
  *
- * @param props 属性集
+ * @param object 要封装为响应的对象
  */
-export const reactive = <T extends { [key: string]: any }>(props: T): T => {
-  let descriptors = Object.getOwnPropertyDescriptors(props);
-  let result = {};
-  let properties = {};
-
-  for (let name in descriptors) {
-    let descriptor = descriptors[name];
-    let get = descriptor.get;
-    let set = descriptor.set;
-
-    if (get) {
-      get = get.bind(result);
-
-      if (set) {
-        set = set.bind(result);
-      }
-    } else if (set) {
-      set = set.bind(result);
-    } else {
-      let value = props[name];
-
-      if (typeof value === 'object') {
-        if (isArray(value)) {
-          for (let i = value.length; i--; ) {
-            if (typeof value[i] === 'object') {
-              value[i] = reactive(value[i]);
-            }
-          }
-        } else {
-          value = reactive(value);
-        }
-      }
-
-      let signal = createSignal(value);
-
-      get = signal[0];
-      set = signal[1];
+export const reactive = <T extends { [key: string | symbol]: any }>(object: T): T => {
+  if (object && typeof object === 'object') {
+    // 已经是代理对象
+    if (object.__raw__) {
+      return object;
     }
 
-    properties[name] = { get, set };
+    return proxyMap.get(object) || (isArray(object) ? createArraySignal(object)[0]() : reactiveObject(object));
   }
 
-  return defineProperties(result, properties) as T;
+  return object;
+};
+
+/**
+ * 获取响应式代理对象的原始数据
+ *
+ * @param proxy 响应式对象
+ */
+export const toRaw = <T>(proxy: T): T => {
+  // @ts-ignore
+  return (proxy && proxy.__raw__) || proxy;
 };
 
 /**
@@ -142,6 +257,11 @@ export const watch = <T extends unknown>(deps: () => T, callbackFn: (values: T) 
  */
 export interface FetcherResult<T> {
   /**
+   * 异步加载数据方法
+   */
+  asyncLoad: () => Promise<T>;
+
+  /**
    * 异步状态
    */
   status: 'loading' | 'done' | 'fail';
@@ -160,56 +280,56 @@ export interface FetcherResult<T> {
 /**
  * 创建异步获取器
  *
- * @param promise 异步对象
+ * @param asyncLoad 异步加载数据方法
  * @param ssr_cache 在服务端渲染的模式下是否缓存请求结果到 HTML 中
  */
-export const createFetcher = <T>(promise?: () => Promise<T>, ssr_cache?: string) => {
+export const createFetcher = <T>(asyncLoad: () => Promise<T>, ssr_cache?: string) => {
   let [status, setStatus] = createSignal('loading');
   let [result, setResult] = createSignal();
   let [error, setError] = createSignal();
   let data;
 
-  if (promise) {
-    // @ts-ignore
-    if (import.meta.env.SSR) {
-      let id = createUniqueId();
+  // @ts-ignore
+  if (import.meta.env.SSR) {
+    let id = createUniqueId();
 
-      if ((data = serverContext.cache.get(id))) {
-        setStatus('done');
-        setResult(data);
-      } else {
-        serverContext.promises.push(
-          promise().then((result) => {
-            serverContext.cache.set(id, result);
-
-            // 需要缓存到 HTML 中
-            if (ssr_cache) {
-              serverContext.ssr[ssr_cache] = result;
-            }
-          }),
-        );
-      }
+    if ((data = serverContext.cache.get(id))) {
+      setStatus('done');
+      setResult(data);
     } else {
-      if (ssr_cache && (data = (window as any).SSR) && (data = data[ssr_cache])) {
-        setStatus('done');
-        setResult(data);
-      } else {
-        promise().then(
-          (result) => {
-            setStatus('done');
-            setResult(result as any);
-          },
-          (error) => {
-            setStatus('fail');
-            setError(error);
-          },
-        );
-      }
+      serverContext.promises.push(
+        asyncLoad().then((result) => {
+          serverContext.cache.set(id, result);
+
+          // 需要缓存到 HTML 中
+          if (ssr_cache) {
+            serverContext.ssr[ssr_cache] = result;
+          }
+        }),
+      );
+    }
+  } else {
+    if (ssr_cache && (data = (window as any).SSR) && (data = data[ssr_cache])) {
+      setStatus('done');
+      setResult(data);
+    } else {
+      asyncLoad().then(
+        (result) => {
+          setStatus('done');
+          setResult(result as any);
+        },
+        (error) => {
+          setStatus('fail');
+          setError(error);
+        },
+      );
     }
   }
 
   return defineProperties(
-    {},
+    {
+      asyncLoad,
+    },
     {
       status: {
         get: status,
@@ -224,7 +344,7 @@ export const createFetcher = <T>(promise?: () => Promise<T>, ssr_cache?: string)
         set: setError,
       },
     },
-  ) as FetcherResult<T>;
+  ) as unknown as FetcherResult<T>;
 };
 
 /**
