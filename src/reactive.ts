@@ -64,10 +64,10 @@ export interface SSRRenderPage {
   abort?: boolean;
 }
 
+const signalOptions: any = { equals: false, internal: true };
 const proxyMap = new WeakMap();
 
-const arrayMutationMethods = (() => {
-  let names = ['push', 'pop', 'shift', 'unshift', 'splice', 'sort', 'reverse', 'fill', 'copyWithin'];
+const arrayToKeys = (names: string[]) => {
   let result = Object.create(null);
 
   for (let i = 0, l = names.length; i < l; i++) {
@@ -75,7 +75,19 @@ const arrayMutationMethods = (() => {
   }
 
   return result;
-})();
+};
+
+const arrayMutationMethods = arrayToKeys([
+  'push',
+  'pop',
+  'shift',
+  'unshift',
+  'splice',
+  'sort',
+  'reverse',
+  'fill',
+  'copyWithin',
+]);
 
 function arrayProxyGetHandler(target: any, property: any, receiver) {
   let index = typeof property === 'string' && +property;
@@ -105,19 +117,11 @@ function arrayProxyGetHandler(target: any, property: any, receiver) {
       let set = handler.fn;
 
       return function () {
-        let array = target.slice(0);
-        let result = value.apply(array, arguments);
+        let result = value.apply(target, arguments);
 
-        // 返回的不是对象
-        if (result !== array) {
-          set(new Proxy(array, handler));
-          return result;
-        }
-
-        let proxy = new Proxy(array, handler);
-
-        set(proxy);
-        return proxy;
+        // 触发更新
+        set(receiver);
+        return result !== target ? result : receiver;
       };
     }
 
@@ -133,20 +137,20 @@ function arrayProxySetHandler(target: any, property: any, value, receiver) {
 
   // 如果是通过索引设置值
   if (property >= 0) {
-    target = target.slice(0);
     target[index] = value;
 
-    this.fn(new Proxy(target, this));
+    // 触发更新
+    this.fn(receiver);
     return true;
   }
 
   // 如果设置的是length属性
   if (property === 'length') {
     if (target.length !== value) {
-      target = target.slice(0);
       target.length = value;
 
-      this.fn(new Proxy(target, this));
+      // 触发更新
+      this.fn(receiver);
       return true;
     }
 
@@ -159,7 +163,7 @@ function arrayProxySetHandler(target: any, property: any, value, receiver) {
 const createArraySignal = (value: any[]) => {
   let handler = { get: arrayProxyGetHandler, set: arrayProxySetHandler, fn: null };
   let proxy = new Proxy(value, handler);
-  let signal = createSignal(proxy);
+  let signal = createSignal(proxy, signalOptions);
 
   handler.fn = signal[1];
 
@@ -177,7 +181,18 @@ const reactiveObject = (object) => {
   const proxy = new Proxy(object, {
     get(target, property, receiver) {
       if (property !== '__raw__') {
-        return (signals[property] || initSignal(signals, property, target[property]))[0]();
+        let value = (signals[property] || initSignal(signals, property, target[property]))[0]();
+
+        if (typeof value !== 'object' || !value) {
+          return value;
+        }
+
+        // 已经是代理对象
+        if (value.__raw__) {
+          return value;
+        }
+
+        return proxyMap.get(value) || (isArray(value) ? createArraySignal(value)[0]() : reactiveObject(value));
       }
 
       return target;
@@ -188,7 +203,7 @@ const reactiveObject = (object) => {
         value = value.__raw__ || value;
       }
 
-      (signals[property] || initSignal(signals, property, target[property]))[1](value);
+      (signals[property] || initSignal(signals, property, target[property]))[1]((target[property] = value));
       return true;
     },
 
@@ -202,22 +217,26 @@ const reactiveObject = (object) => {
   return proxy;
 };
 
+const throwReactiveError = () => {
+  throw new Error(`Array cannot directly create reactive object，Please use like: reactive({ items: [] })`);
+};
+
 /**
  * 创建响应式对象
  *
  * @param object 要封装为响应的对象
  */
-export const reactive = <T extends { [key: string | symbol]: any }>(object: T): T => {
+export const reactive = <T extends { [key: string]: any }>(object: T extends any[] ? never : T): T => {
   if (object && typeof object === 'object') {
     // 已经是代理对象
     if (object.__raw__) {
       return object;
     }
 
-    return proxyMap.get(object) || (isArray(object) ? createArraySignal(object)[0]() : reactiveObject(object));
+    return proxyMap.get(object) || (!isArray(object) && reactiveObject(object)) || throwReactiveError();
   }
 
-  return object;
+  throw new Error(`${object} can not create reactive object`);
 };
 
 /**

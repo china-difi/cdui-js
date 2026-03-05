@@ -2,7 +2,7 @@ import fs from 'fs';
 
 export interface Rule {
   match: string;
-  build(outputs: string[], selector: string, value: string): void;
+  build(outputs: string[], selector: string, value: string, before: string[]): void;
 }
 
 export const rules: Rule[] = [
@@ -35,13 +35,13 @@ export const rules: Rule[] = [
   },
   {
     match: '.border-c',
-    build: (outputs: string[], selector: string, value: string) => {
+    build: (outputs: string[], selector: string, value: string, before: string[]) => {
       if (selector === '.border-c') {
-        outputs.push(`.border { border-color: ${value} }`);
-        outputs.push(`.border-t { border-top-color: ${value} }`);
-        outputs.push(`.border-r { border-right-color: ${value} }`);
-        outputs.push(`.border-b { border-bottom-color: ${value} }`);
-        outputs.push(`.border-l { border-left-color: ${value} }`);
+        before.push(`.border { border-color: ${value} }`);
+        before.push(`.border-t { border-top-color: ${value} }`);
+        before.push(`.border-r { border-right-color: ${value} }`);
+        before.push(`.border-b { border-bottom-color: ${value} }`);
+        before.push(`.border-l { border-left-color: ${value} }\n`);
       }
 
       outputs.push(`${selector} { border-color: ${value} }`);
@@ -143,9 +143,9 @@ export const rules: Rule[] = [
   },
   {
     match: '.icon-c',
-    build: (outputs: string[], selector: string, value: string) => {
+    build: (outputs: string[], selector: string, value: string, before: string[]) => {
       if (selector === '.icon-c') {
-        outputs.unshift(`body { stroke: ${value}; fill: ${value}; }\n.icon { stroke: inherit; fill: inherit; }\n`);
+        before.push(`body { stroke: ${value}; fill: ${value}; }\n.icon { stroke: inherit; fill: inherit; }`);
       }
 
       outputs.push(`${selector} { stroke: ${value}; fill: ${value}; }`);
@@ -153,9 +153,9 @@ export const rules: Rule[] = [
   },
   {
     match: '.icon-s',
-    build: (outputs: string[], selector: string, value: string) => {
+    build: (outputs: string[], selector: string, value: string, before: string[]) => {
       if (selector === '.icon-s') {
-        outputs.unshift(`.icon { width: ${value}; height: ${value}; }\n`);
+        before.push(`.icon { width: ${value}; height: ${value}; }\n`);
       }
 
       outputs.push(`${selector} .icon { width: ${value}; height: ${value}; }`);
@@ -188,32 +188,39 @@ const findRule = (name: string) => {
   }
 };
 
-const parse = (rule: Rule, outputs: string[], selectorPrefix: string, name: string, value: string) => {
+const parse = (
+  rule: Rule,
+  outputs: string[],
+  selectorPrefix: string,
+  name: string,
+  value: string,
+  before: string[],
+) => {
   if (name.endsWith('-hover')) {
-    rule.build(outputs, selectorPrefix + name + ':hover', value);
-    rule.build(outputs, selectorPrefix + '.hover:hover ' + name, value);
+    rule.build(outputs, selectorPrefix + name + ':hover', value, before);
+    rule.build(outputs, selectorPrefix + '.hover:hover ' + name, value, before);
     return;
   }
 
   if (name.endsWith('-active')) {
-    rule.build(outputs, selectorPrefix + name + ':active', value);
-    rule.build(outputs, selectorPrefix + '.active:active ' + name, value);
+    rule.build(outputs, selectorPrefix + name + ':active', value, before);
+    rule.build(outputs, selectorPrefix + '.active:active ' + name, value, before);
     return;
   }
 
   if (name.endsWith('-focus')) {
-    rule.build(outputs, selectorPrefix + name + ':focus', value);
-    rule.build(outputs, selectorPrefix + '.focus:focus ' + name, value);
+    rule.build(outputs, selectorPrefix + name + ':focus', value, before);
+    rule.build(outputs, selectorPrefix + '.focus:focus ' + name, value, before);
     return;
   }
 
   if (name.endsWith('-selected')) {
-    rule.build(outputs, selectorPrefix + name + '.selected', value);
-    rule.build(outputs, selectorPrefix + '.selected ' + name, value);
+    rule.build(outputs, selectorPrefix + name + '.selected', value, before);
+    rule.build(outputs, selectorPrefix + '.selected ' + name, value, before);
     return;
   }
 
-  rule.build(outputs, selectorPrefix + name, value);
+  rule.build(outputs, selectorPrefix + name, value, before);
 };
 
 /**
@@ -227,6 +234,7 @@ export const buildCSS = (cssRuleFile: string, cssFile?: string) => {
   let lines = css.split(/\r?\n\s*/);
   let selectorPrefix = '';
   let outputs = [];
+  let before = [];
 
   for (let i = 0, l = lines.length; i < l; i++) {
     let line = lines[i].trim();
@@ -241,7 +249,7 @@ export const buildCSS = (cssRuleFile: string, cssFile?: string) => {
           value = line.slice(index + 1);
 
           if ((value = value.replace(/}\s*\;*\s*/, '').trim())) {
-            rule.build(outputs, selectorPrefix + name, value);
+            rule.build(outputs, selectorPrefix + name, value, before);
           }
 
           continue;
@@ -255,7 +263,7 @@ export const buildCSS = (cssRuleFile: string, cssFile?: string) => {
             .trim();
 
           if (value && value !== '#') {
-            parse(rule, outputs, selectorPrefix, name, value);
+            parse(rule, outputs, selectorPrefix, name, value, before);
           }
 
           continue;
@@ -283,6 +291,7 @@ export const buildCSS = (cssRuleFile: string, cssFile?: string) => {
     }
   }
 
+  outputs.unshift(...before);
   css = outputs.join('\n');
 
   if (cssFile) {
