@@ -1,6 +1,6 @@
 {
   "name": "cdui-js",
-  "version": "1.0.10",
+  "version": "1.0.11",
   "type": "module",
   "main": "src/index.ts",
   "bin": {

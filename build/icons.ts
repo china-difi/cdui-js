@@ -10,34 +10,41 @@ import path from 'path';
 export const loadIconFile = (svgFile: string, removeColor?: 'fill' | 'stroke' | 'both'): string => {
   let name = path.basename(svgFile).replace('.svg', '');
   let svg = fs.readFileSync(svgFile, 'utf8');
-  let index = svg.indexOf(' viewBox="');
-  let viewBox = svg.slice(index, (index = svg.indexOf('"', index + 12) + 1));
-  let content = svg.slice(svg.indexOf('>', index) + 1, svg.lastIndexOf('</svg>'));
-  let hasStroke = content.indexOf(' stroke="') > 0;
-  let hasFill = content.indexOf(' fill="') > 0;
-
-  // 没有描边
-  if (!hasStroke) {
-    // 强制禁止外部修改描边
-    viewBox += ' stroke="none"';
-  } else if (!hasFill) {
-    // 没有填充则强制禁止外部修改填充
-    viewBox += ' fill="none"';
-  }
+  let index = svg.indexOf('>', 0);
+  let content = svg.slice(index + 1, svg.lastIndexOf('</svg>'));
 
   if (removeColor) {
     // 去填充色
-    if (hasFill && removeColor !== 'stroke') {
+    if (removeColor !== 'stroke') {
       content = content.replace(/ fill=\"[^"]+\"/g, '');
     }
 
     // 去描边色
-    if (hasStroke && removeColor !== 'fill') {
+    if (removeColor !== 'fill') {
       content = content.replace(/ stroke=\"[^"]+\"/g, '');
     }
   }
 
-  return `<symbol id="icon-${name}"${viewBox}>${content}</symbol>`;
+  let title = svg.slice(0, index);
+  let viewBox = '';
+  let fill = '';
+  let stroke = '';
+
+  if ((index = title.indexOf(' viewBox="')) > 0) {
+    viewBox = title.slice(index, title.indexOf('"', index + 11) + 1);
+  }
+
+  if (removeColor !== 'both') {
+    if (removeColor !== 'fill' && (index = title.indexOf(' fill="')) > 0) {
+      fill = title.slice(index, title.indexOf('"', index + 8) + 1);
+    }
+
+    if (removeColor !== 'stroke' && (index = title.indexOf(' stroke="')) > 0) {
+      stroke = title.slice(index, title.indexOf('"', index + 10) + 1);
+    }
+  }
+
+  return `<symbol id="icon-${name}"${viewBox}${fill}${stroke}>${content}</symbol>`;
 };
 
 /**
