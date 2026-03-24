@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <title>cdui-js demo</title>
+  <meta name="description" content="stock" />
+  <meta charset="UTF-8" />
+  <meta name="renderer" content="webkit" />
+  <meta name="force-rendering" content="webkit" />
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1, minimum-scale=1, user-scalable=no" />
+  <link rel="icon" type="image/svg" href="favicon.svg?v=1" />
+  <!-- ssr-head -->
+</head>
+
+<body>
+  <svg id="ICONS" aria-hidden="true" style="position: absolute; width: 0px; height: 0px; overflow: hidden;"
+    xmlns="http://www.w3.org/2000/svg">
+<symbol id="icon-backward" viewBox="0 0 16 16" fill="none">
+<path d="M10.3661 2.72003L6.01942 7.0667C5.50609 7.58003 5.50609 8.42003 6.01942 8.93336L10.3661 13.28" stroke="#1B212D" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
+</symbol>
+<symbol id="icon-close" viewBox="0 0 14 14" fill="none">
+<path d="M0.750078 11.3565L11.3567 0.749922M11.3567 11.3565L0.750078 0.749922" stroke="#8693B6" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</symbol>
+<symbol id="icon-dropdown" viewBox="0 0 16 16" fill="none">
+<path d="M2.72 5.63428L7.06667 9.98094C7.58 10.4943 8.42 10.4943 8.93333 9.98094L13.28 5.63428" stroke="#1B212D" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
+</symbol>
+<symbol id="icon-forward" viewBox="0 0 16 16" fill="none">
+<path d="M5.63391 2.72003L9.98058 7.0667C10.4939 7.58003 10.4939 8.42003 9.98058 8.93336L5.63391 13.28" stroke="#1B212D" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
+</symbol>
+<symbol id="icon-toggle" viewBox="0 0 10 6" fill="none">
+<path d="M9.14515 0.5L5.58667 4.30333C5.16642 4.7525 4.47873 4.7525 4.05848 4.30333L0.5 0.5" stroke="white" stroke-miterlimit="10" stroke-linecap="round" stroke-linejoin="round"/>
+</symbol>
+</svg>
+  <script type="text/javascript">
+    window.addEventListener(
+      'resize',
+      (function (window, navigator) {
+        function update() {
+          var ua = navigator.ua;
+          var body = document.body;
+          var limits = [1920, 1280, 1024, 800, 640, 480];
+          var length = limits.length;
+          var width = window.innerWidth;
+          var classList = ['pc'];
+
+          if (/Mobile|iPhone/i.test(ua)) {
+            classList.push('mobile');
+          } else if (/iPad|Tablet|Android/i.test(ua) || (navigator.maxTouchPoints > 1 && !/Windows|Linux/.test(ua))) {
+            classList.push('tablet');
+          }
+
+          classList.push(window.innerHeight < width ? 'landscape' : 'portrait');
+
+          for (var i = 0; i < length; i++) {
+            var limit = limits[i];
+
+            if (width <= limit) {
+              if (width < limit) {
+                classList.push('lt-' + limit);
+              }
+
+              classList.push('le-' + limit);
+            } else if (width >= limit) {
+              classList.push('ge-' + limit);
+
+              if (width > limit) {
+                classList.push('gt-' + limit);
+              }
+            }
+          }
+
+          // 计算侧边框展开或收拢
+          classList.push('sidebar-' + (width > 1280 ? 'expanded' : 'collapsed'));
+          classList = classList.join(' ');
+
+          if (body.className !== classList) {
+            body.className = classList;
+            (window.onlayoutchange || function () { })();
+          }
+
+          // 触发内容区大小变化事件
+          window.dispatchEvent(new Event('content-resize'));
+        }
+
+        update();
+
+        return update;
+      })(window, navigator)
+    );
+  </script>
+  <!-- ssr-body -->
+  <script type="module" src="./src/main.ts"></script>
+</body>
+
+</html>

@@ -1,7 +1,7 @@
 import { createSignal, splitProps } from 'solid-js';
 
 import { JSX } from '../jsx';
-import { defineProperty } from '../reactive';
+import { combineClass, defineProperty } from '../reactive';
 
 const COLLAPSED_CLASS = 'collapsed';
 
@@ -130,9 +130,7 @@ export const CollapsiblePanel = (
   return (
     <div
       ref={ref as any}
-      class={['collapsed-panel', thisProps.collapsed && COLLAPSED_CLASS, thisProps.class]
-        .filter((item) => item)
-        .join(' ')}
+      class={combineClass('collapsed-panel', thisProps.collapsed && COLLAPSED_CLASS, thisProps.class)}
       {...restProps}
     ></div>
   );

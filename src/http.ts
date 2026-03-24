@@ -1,4 +1,19 @@
 /**
+ * 自定义响应结果
+ */
+export interface ResponseResult {
+  /**
+   * 响应类型  custom: 自定义响应结果  retry: 重试
+   */
+  type: 'custom' | 'retry';
+
+  /**
+   * 自定义响应结果（type === 'custom' 时有效）
+   */
+  custom?: any;
+}
+
+/**
  * http 拦截器
  */
 export const httpInterceptor = {
@@ -10,11 +25,7 @@ export const httpInterceptor = {
   /**
    * 响应拦截（返回 Promise true 表示需要重新发送请求，返回 Promise false 抛出默认异常）
    */
-  response: (() => {}) as (
-    response: Response,
-    options?: RequestInit,
-    preventLogon?: boolean,
-  ) => Promise<boolean> | void,
+  response: (() => {}) as (response: Response, options?: RequestInit) => Promise<ResponseResult> | void,
 };
 
 /**
@@ -62,50 +73,59 @@ Object.defineProperty(Promise.prototype, 'data', {
   },
 });
 
-const handleResponse = (response: Response, url: string, options?: RequestInit, preventLogon?: boolean) => {
+const respondDefault = (response: Response, json: boolean) => {
+  // 失败返回异常
+  return response.ok
+    ? json
+      ? response.json()
+      : response
+    : Promise.reject(response.status + ' ' + response.statusText);
+};
+
+const handleResponse = (response: Response, url: string, json: boolean, options?: RequestInit) => {
   // 响应拦截
-  let promise = httpInterceptor.response(response, options, preventLogon);
+  let result = httpInterceptor.response(response, options);
 
   // 返回了异步对象
-  if (promise) {
-    // 返回状态为 true 表示需要重新发送请求
-    return promise.then((status) =>
-      status ? sendInternal(url, options, preventLogon) : Promise.reject(response.status + ' ' + response.statusText),
-    );
-  }
+  return result
+    ? result.then((result) => {
+        switch (result.type) {
+          case 'custom':
+            return result.custom || respondDefault(response, json);
 
-  // 成功响应
-  if (response.ok) {
-    return response;
-  }
+          case 'retry':
+            return sendInternal(url, json, options);
 
-  // 失败返回异常
-  return Promise.reject(response.status + ' ' + response.statusText);
+          default:
+            return respondDefault(response, json);
+        }
+      })
+    : respondDefault(response, json);
 };
 
 /**
  * 发送方法
  *
  * @param url 请求URL
- * @param data 请求数据
+ * @param json 是否返回 json 数据
  * @param options 请求参数
  */
-let sendInternal = (url: string, options?: RequestInit, preventLogon?: boolean): Promise<Response> => {
-  return fetch(url, options).then((response) => handleResponse(response, url, options, preventLogon));
+let sendInternal = (url: string, json: boolean, options?: RequestInit): Promise<Response> => {
+  return fetch(url, options).then((response) => handleResponse(response, url, json, options));
 };
 
 /**
- * 自定义请求发送
+ * 发送自定义请求
  *
  * @param url 请求URL
  * @param options 请求参数
  */
-const send = (url: string, options?: RequestInit, preventLogon?: boolean): Promise<Response> => {
-  return fetch(url, options).then((response) => handleResponse(response, url, options, preventLogon));
+const send = (url: string, options?: RequestInit): Promise<Response> => {
+  return fetch(url, options).then((response) => handleResponse(response, url, false, options));
 };
 
 /**
- * 自定义请求 JSON 数据的方法
+ * 自定义请求 JSON 响应数据
  *
  * @param method 请求方法
  * @param url 请求URL
@@ -117,7 +137,6 @@ const request = <T>(
   url: string,
   data?: unknown,
   options?: Omit<RequestInit, 'body'>,
-  preventLogon?: boolean,
 ): HttpResult<T> => {
   if (options) {
     let headers = options.headers;
@@ -142,7 +161,7 @@ const request = <T>(
 
   url = httpInterceptor.request(url, options) || url;
 
-  return sendInternal(url, options, preventLogon).then((response) => response.json()) as HttpResult<T>;
+  return sendInternal(url, true, options) as unknown as HttpResult<T>;
 };
 
 /**
@@ -161,8 +180,8 @@ const request = <T>(
  * // 发送带取消信号的请求
  * http.get('https://example.com/api/...', { signal });
  */
-const get = <T>(url: string, options?: Omit<RequestInit, 'method' | 'body'>, preventLogon?: boolean): HttpResult<T> => {
-  return request('GET', url, void 0, options, preventLogon);
+const get = <T>(url: string, options?: Omit<RequestInit, 'method' | 'body'>): HttpResult<T> => {
+  return request('GET', url, void 0, options);
 };
 
 /**
@@ -182,13 +201,8 @@ const get = <T>(url: string, options?: Omit<RequestInit, 'method' | 'body'>, pre
  * // 发送带取消信号的请求
  * http.post('https://example.com/api/...', null, { signal });
  */
-const post = <T>(
-  url: string,
-  data?: unknown,
-  options?: Omit<RequestInit, 'method' | 'body'>,
-  preventLogon?: boolean,
-): HttpResult<T> => {
-  return request('POST', url, data, options, preventLogon);
+const post = <T>(url: string, data?: unknown, options?: Omit<RequestInit, 'method' | 'body'>): HttpResult<T> => {
+  return request('POST', url, data, options);
 };
 
 /**
@@ -198,13 +212,8 @@ const post = <T>(
  * @param data 请求数据（JSON）
  * @param options 请求参数
  */
-const put = <T>(
-  url: string,
-  data: unknown,
-  options?: Omit<RequestInit, 'method' | 'body'>,
-  preventLogon?: boolean,
-): HttpResult<T> => {
-  return request('PUT', url, data, options, preventLogon);
+const put = <T>(url: string, data: unknown, options?: Omit<RequestInit, 'method' | 'body'>): HttpResult<T> => {
+  return request('PUT', url, data, options);
 };
 
 /**
@@ -213,13 +222,8 @@ const put = <T>(
  * @param url 请求URL
  * @param options 请求参数
  */
-const del = <T>(
-  url: string,
-  data?: unknown,
-  options?: Omit<RequestInit, 'method' | 'body'>,
-  preventLogon?: boolean,
-): HttpResult<T> => {
-  return request('DELETE', url, data, options, preventLogon);
+const del = <T>(url: string, data?: unknown, options?: Omit<RequestInit, 'method' | 'body'>): HttpResult<T> => {
+  return request('DELETE', url, data, options);
 };
 
 /**
@@ -240,7 +244,7 @@ export interface NetworkTrackingResult {
  * @param callbackFn 回调处理
  */
 export const track = (callbackFn: (result: NetworkTrackingResult) => void) => {
-  sendInternal = (url: string, options?: RequestInit, preventLogon?: boolean): Promise<Response> => {
+  sendInternal = (url: string, json: boolean, options?: RequestInit): Promise<Response> => {
     let start = Date.now();
 
     return fetch(url, options)
@@ -253,7 +257,7 @@ export const track = (callbackFn: (result: NetworkTrackingResult) => void) => {
           response,
         });
 
-        return handleResponse(response, url, options, preventLogon);
+        return handleResponse(response, url, json, options);
       })
       .catch((error) => {
         callbackFn({

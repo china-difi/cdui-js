@@ -1,9 +1,18 @@
-import { createEffect, createMemo, createSignal, For, onCleanup, onMount, splitProps } from 'solid-js';
-
 import { JSX } from '../jsx';
 import { isBrowser } from '../dom';
 import { animateScrollIntoView } from '../animate-scroll-to';
-import { defineProperty } from '../reactive';
+import {
+  createEffect,
+  createMemo,
+  createSignal,
+  combineClass,
+  defineProperty,
+  onCleanup,
+  onMount,
+  splitProps,
+} from '../reactive';
+
+import { For } from './For';
 import { Icon } from './Icon';
 
 const CLASS_NAME = 'carousel-vertical';
@@ -269,7 +278,7 @@ export const Carousel = <T, U extends JSX.Element>(
   });
 
   return (
-    <div ref={ref as any} class={'carousel scrollbar-hidden ' + (thisProps.class || '')} {...restProps}>
+    <div ref={ref as any} class={combineClass('carousel scrollbar-hidden', thisProps.class)} {...restProps}>
       <For each={fillItems(thisProps.each)}>{thisProps.children}</For>
     </div>
   );

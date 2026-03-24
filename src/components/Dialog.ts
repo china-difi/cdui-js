@@ -16,7 +16,7 @@ export type Dialog = HTMLElement & {
  * 显示对话框
  *
  * @param component 对话框组件
- * @returns 关闭对话框方法
+ * @returns 对话框对象
  */
 export const showDialog = (component: () => JSX.Element): Dialog => {
   return createRoot((dispose) => {

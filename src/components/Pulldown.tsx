@@ -1,6 +1,5 @@
-// import { onCleanup, onMount, splitProps } from 'solid-js';
-
 // import { JSX } from '../jsx';
+// import { combineClass, onCleanup, onMount, splitProps } from '../reactive';
 // import { addEventListener, removeEventListener } from '../dom';
 
 // /**
@@ -143,7 +142,7 @@
 //   });
 
 //   return (
-//     <div ref={ref} class={'pulldown' + (thisProps.class ? ' ' + thisProps.class : '')} {...restProps}>
+//     <div ref={ref} class={combineClass('pulldown', thisProps.class)} {...restProps}>
 //       {props.children ||
 //         pulldownChildren ||
 //         (pulldownChildren = (

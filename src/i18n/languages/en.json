@@ -1,0 +1,21 @@
+{
+  "Canlendar": {
+    "Month": "${0}年${1}月",
+    "Weeks": [
+      "一",
+      "二",
+      "三",
+      "四",
+      "五",
+      "六",
+      "日"
+    ]
+  },
+  "Form": {
+    "Required": "不能为空",
+    "NotLessThan": "不能小于 ${value}",
+    "NotGreaterThan": "不能大于 ${value}",
+    "Between": "必须在 ${min} -> ${max} 之间",
+    "NotDate": "\"${value}\" 不是一个有效的日期值"
+  }
+}

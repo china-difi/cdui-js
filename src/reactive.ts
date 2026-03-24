@@ -5,6 +5,24 @@ export const defineProperties = Object.defineProperties;
 export const create = Object.create;
 export const isArray = Array.isArray;
 
+export {
+  type JSX,
+  children,
+  createComponent,
+  createEffect,
+  createMemo,
+  createContext,
+  createSignal,
+  useContext,
+  splitProps,
+  onMount,
+  onCleanup,
+  untrack,
+  batch,
+} from 'solid-js';
+
+export { hydrate, render } from 'solid-js/web';
+
 export interface ServerContext {
   /**
    * 异步等待集合
@@ -279,6 +297,15 @@ export const reactive = <T>(value: T): ReactiveProxy<T> => {
 export const toRaw = <T>(proxy: T): T => {
   // @ts-ignore
   return (proxy && proxy.__raw__) || proxy;
+};
+
+/**
+ * 合并 class
+ *
+ * @param classList class 列表
+ */
+export const combineClass = (...classList: (string | null | void)[]) => {
+  return classList.filter((item) => item).join(' ');
 };
 
 /**

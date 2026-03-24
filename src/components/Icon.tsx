@@ -1,6 +1,7 @@
 import { splitProps } from 'solid-js';
 
 import { JSX } from '../jsx';
+import { combineClass } from '../reactive';
 
 /**
  * 图标组件
@@ -9,7 +10,7 @@ export const Icon = (props?: JSX.SvgSVGAttributes<never> & { name: string }) => 
   let [thisProps, restProps] = splitProps(props, ['class', 'name']);
 
   return (
-    <svg class={'icon' + (thisProps.class ? ' ' + thisProps.class : '')} aria-hidden={true} {...restProps}>
+    <svg class={combineClass('icon', thisProps.class)} aria-hidden={true} {...restProps}>
       <use href={'#icon-' + thisProps.name}></use>
     </svg>
   );

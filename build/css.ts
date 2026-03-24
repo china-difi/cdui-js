@@ -162,22 +162,6 @@ export const rules: Rule[] = [
       outputs.push(`${selector}.icon { width: ${value}; height: ${value}; }`);
     },
   },
-  {
-    match: '.button',
-    build: (outputs: string[], selector: string, value: string) => {
-      outputs.push(`${selector} { ${value} }`);
-    },
-  },
-  {
-    match: '.link',
-    build: (outputs: string[], selector: string, value: string) => {
-      if (selector === '.link') {
-        outputs.push(`a, .link { ${value} }`);
-      } else {
-        outputs.push(`${selector} { ${value} }`);
-      }
-    },
-  },
 ];
 
 const findRule = (name: string) => {
@@ -269,7 +253,10 @@ export const buildCSS = (cssRuleFile: string, cssFile?: string) => {
           continue;
         }
 
-        console.error('不合法的格式：' + lines[i]);
+        // 其它格式原样输出
+        if (!/\{\s*\}/.test(line)) {
+          outputs.push(line);
+        }
         break;
 
       case '+': // 上级选择器
@@ -287,7 +274,11 @@ export const buildCSS = (cssRuleFile: string, cssFile?: string) => {
         break;
 
       default:
-        console.error('不合法的格式：' + lines[i]);
+        // 其它格式原样输出
+        if (!/\{\s*\}/.test(line)) {
+          outputs.push(line);
+        }
+        break;
     }
   }
 
