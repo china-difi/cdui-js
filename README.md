@@ -100,6 +100,40 @@ console.log(getValue());
 ```
 
 
+## 批量更新
+
+同一时刻如果修改了多个响应式属性，则每次修改都会触发响应式更新。
+
+```tsx
+import { batch, createEffect, reactive } from 'cdui-js';
+
+const state = reactive({ value1: 1, value2: 2 });
+
+createEffect(() => {
+  console.log(state.value1, state.value2);
+});
+
+// 两次更新会执行 createEffect 回调两次
+state.value1++;
+state.value2++;
+```
+
+这种情况可使用`batch`进行批量修改响应式属性以减少响应式自动更新的次数。
+
+```tsx
+import { batch, createEffect, reactive } from 'cdui-js';
+
+const state = reactive({ value1: 1, value2: 2 });
+
+createEffect(() => {
+  console.log(state.value1, state.value2);
+});
+
+// 两次更新会执行 createEffect 回调两次
+state.value1++;
+state.value2++;
+```
+
 # 响应式组件
 
 任意一个函数，如果返回了`JSX.Element`，则这个函数就是一个响应式组件。建议使用`tsx`作为组件模板，本响应式框架没有虚拟`DOM`，也更轻量高效。
@@ -257,20 +291,32 @@ function ParentComponent() {
 }
 ```
 
-有时候，需要把不同的属性值应用到不同的`DOM`节点，可以使用`splitProps`方法对`props`进行切分。切分后的任一部分都具有响应式特性。
+有时候，需要把不同的属性值应用到不同的`DOM`节点，可以使用`omitProps`方法排除`props`中不需要的属性。`omitProps`返回的对象仍具有响应式特性。
 
 ```tsx
-import { splitProps } from 'cdui-js';
+import { omitProps } from 'cdui-js';
+
+// 定义要排除的属性集合（使用 as const 标记为元组）
+const OMIT_PROPS = ['title', 'children'] as const;
 
 function Component(props: { title: string, children: JSX.Element[] }) {
-  // restProps 为拆分后剩余的部分
-  const [titleProps, childrenProps, restProps] = splitProps(props, ['title'], ['children']);
-
   return (
-    <div {...restProps}>
+    <div {...omitProps(props, OMIT_PROPS)}>
       <div>{titleProps.title}</div>
       <div>{childrenProps.children}</div>
     </div>
+  );
+}
+```
+
+可以使用`combineClass`合并`class`：
+
+```tsx
+import { combineClass } from 'cdui-js';
+
+function Component(props: { class: string }) {
+  return (
+    <div class={combineClass('defaultClassName', props.class)}></div>
   );
 }
 ```

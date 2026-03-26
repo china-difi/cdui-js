@@ -1,5 +1,5 @@
 import { JSX } from '../jsx';
-import { combineClass, createSignal, splitProps } from '../reactive';
+import { combineClass, createSignal, omitProps } from '../reactive';
 import { disableAutoCloseEvent } from '../dom';
 import { For } from './For';
 import { Popup, PopupApi } from './Popup';
@@ -46,6 +46,8 @@ const formatMonth = (value: Date) => {
 //   );
 // };
 
+const OMIT_PROPS = ['class', 'value', 'readonly', 'format', 'children'] as const;
+
 /**
  * 日期选择组件
  */
@@ -65,26 +67,25 @@ export const DatePicker = (
     readonly?: boolean;
   },
 ) => {
-  let [thisProps, restProps] = splitProps(props, ['class', 'value', 'readonly', 'format', 'children']);
   let popup: PopupApi;
 
-  const [value, setValue] = createSignal(thisProps.value && parseDate(thisProps.value));
+  const [value, setValue] = createSignal(props.value && parseDate(props.value));
 
   return (
-    <div class={combineClass('datepicker', thisProps.class)} {...restProps}>
+    <div class={combineClass('datepicker', props.class)} {...omitProps(props, OMIT_PROPS)}>
       <div class="datepicker-host" {...disableAutoCloseEvent}>
         <input
           class="datepicker-input"
-          value={formatDate(value(), thisProps.format)}
-          readonly={thisProps.readonly}
-          onclick={() => thisProps.readonly && popup.togglePopup()}
+          value={formatDate(value(), props.format)}
+          readonly={props.readonly}
+          onclick={() => props.readonly && popup.togglePopup()}
         ></input>
         <svg class="icon icon-s" aria-hidden={true} onclick={() => popup.togglePopup()}>
           <use href="#icon-dropdown"></use>
         </svg>
       </div>
       <Popup api={(api) => (popup = api)} onPopup={() => showPopup()}>
-        {thisProps.children}
+        {props.children}
       </Popup>
     </div>
   );

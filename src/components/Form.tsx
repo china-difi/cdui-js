@@ -1,8 +1,9 @@
 import { Form as i18n } from '../i18n';
 
-import { createContext, useContext, splitProps, onMount, combineClass } from '../reactive';
+import { createContext, useContext, onMount, combineClass, omitProps } from '../reactive';
 import { JSX } from '../jsx';
 import { replaceTemplate } from '../template';
+import { FormItemContext } from './provider';
 
 /**
  * 表单属性集
@@ -33,10 +34,6 @@ export interface FormItemProps {
    */
   hidden?: boolean;
   /**
-   * 点击 label 自动获取焦点的组件（选择器）
-   */
-  for?: string;
-  /**
    * 错误信息
    */
   error?: string;
@@ -44,6 +41,55 @@ export interface FormItemProps {
    * 必填校验信息
    */
   requiredError?: string;
+}
+
+/**
+ * 表单外部调用接口
+ */
+export interface FormApi {
+  /**
+   * 校验表单
+   *
+   * @param filter 过滤器（校验部分字段）
+   */
+  validate(filter?: (target: ValidateTarget) => void | boolean): Promise<boolean>;
+
+  /**
+   * 滚动到第一个错误位置
+   */
+  scrollToError(): void;
+
+  /**
+   * 清除所有错误信息
+   */
+  clearErrors(): void;
+}
+
+export interface FormProps {
+  /**
+   * 表单数据
+   */
+  data: object;
+
+  /**
+   * 表单校验规则
+   */
+  rules: ValidateRules;
+
+  /**
+   * label 对齐方式
+   */
+  align?: 'left' | 'top' | 'right';
+
+  /**
+   * 标签宽度
+   */
+  labelWidth?: string;
+
+  /**
+   * 外部调用接口
+   */
+  api?: (api: FormApi) => void;
 }
 
 /**
@@ -196,11 +242,6 @@ export type ValidateRule =
 export interface ValidateRules {
   [key: string]: ValidateRule;
 }
-
-/**
- * 表单上下文
- */
-const FormContext = createContext<Pick<FormItemProps, 'align' | 'labelWidth'>>();
 
 const replaceError = (item: FormItemProps, error: string, value?: unknown) => {
   let label = item.label;
@@ -392,18 +433,20 @@ const validate = async (
       let error;
 
       // 有设置了字段且未隐藏
-      if (!item.hidden && (field = child.dataset.field)) {
+      if (!item.hidden && (field = item.field)) {
+        let fields = field.split('.');
+
         // 必填
         if (item.required) {
           // 当前值
-          let value = findValue(data, field);
+          let value = findValue(data, fields);
 
           if (value == null || value === '') {
             error = replaceError(item, item.requiredError || i18n.Required, value);
           }
-        } else if ((rule = findRule(rules, (field = field.split('.'))))) {
+        } else if ((rule = findRule(rules, fields))) {
           // 当前值
-          let value = findValue(data, field);
+          let value = findValue(data, fields);
           // 校验目标
           let target = {
             data,
@@ -442,52 +485,6 @@ const validate = async (
   return result;
 };
 
-/**
- * 表单项
- */
-export const FormItem = (props?: JSX.HTMLAttributes<never> & FormItemProps) => {
-  const [thisProps, restProps] = splitProps(props, [
-    'class',
-    'field',
-    'label',
-    'labelWidth',
-    'align',
-    'required',
-    'hidden',
-    'for',
-    'error',
-    'requiredError',
-    'children',
-  ]);
-
-  const form = useContext(FormContext) as any;
-
-  let item: HTMLElement;
-
-  onMount(() => {
-    (item as any).FORM_ITEM = props;
-  });
-
-  return (
-    <div
-      ref={item as any}
-      class={combineClass(
-        'form-item',
-        'form-align-' + (thisProps.align || form.align || 'left'),
-        thisProps.required && 'required',
-        thisProps.hidden && 'hidden',
-        thisProps.class,
-      )}
-      {...restProps}
-    >
-      <label for={thisProps.for} style={{ width: thisProps.labelWidth || form.labelWidth }}>
-        {thisProps.label}
-      </label>
-      <div class="form-body">{thisProps.children}</div>
-    </div>
-  );
-};
-
 function scrollToError(this: HTMLFormElement) {
   let error = this.querySelector('.form-error') as HTMLElement;
 
@@ -504,79 +501,105 @@ function clearErrors(this: HTMLFormElement) {
   }
 }
 
+const setValue = (data: object, field: string, value: any) => {
+  let fields = field.split('.');
+  let last = fields.length - 1;
+
+  for (let i = 0; i < last; i++) {
+    if ((data = data[fields[i]])) {
+    } else {
+      return;
+    }
+  }
+
+  data[fields[last]] = value;
+};
+
 /**
- * 表单外部调用接口
+ * 表单上下文
  */
-export interface FormApi {
-  /**
-   * 校验表单
-   *
-   * @param filter 过滤器（校验部分字段）
-   */
-  validate(filter?: (target: ValidateTarget) => void | boolean): Promise<boolean>;
+const FormContext = createContext<FormProps>();
 
-  /**
-   * 滚动到第一个错误位置
-   */
-  scrollToError(): void;
+const OMIT_ITEM_PROPS = [
+  'class',
+  'field',
+  'label',
+  'labelWidth',
+  'align',
+  'required',
+  'hidden',
+  'error',
+  'requiredError',
+  'children',
+] as const;
 
-  /**
-   * 清除所有错误信息
-   */
-  clearErrors(): void;
-}
+/**
+ * 表单项
+ */
+export const FormItem = (props?: JSX.HTMLAttributes<never> & FormItemProps) => {
+  let domItem: HTMLElement;
+  let domInput: HTMLElement;
+
+  const form = useContext(FormContext);
+  const provider = {
+    getValue: () => findValue(form.data, props.field.split('.')),
+    setValue: (value: any) => setValue(form.data, props.field, value),
+    init: (input: HTMLElement) => {
+      if (!domInput) {
+        domInput = input;
+        return true;
+      }
+    },
+  };
+
+  return (
+    <div
+      ref={(dom) => {
+        domItem = dom;
+        (domItem as any).FORM_ITEM = props;
+      }}
+      class={combineClass(
+        'form-item',
+        'form-align-' + (props.align || form.align || 'left'),
+        props.required && 'required',
+        props.hidden && 'hidden',
+        props.class,
+      )}
+      {...omitProps(props, OMIT_ITEM_PROPS)}
+    >
+      <label style={{ width: props.labelWidth || form.labelWidth }} onclick={() => domInput && domInput.focus()}>
+        {props.label}
+      </label>
+      <div class="form-body">
+        <FormItemContext.Provider value={provider}>{props.children}</FormItemContext.Provider>
+      </div>
+    </div>
+  );
+};
+
+const OMIT_FORM_PROPS = ['data', 'rules', 'align', 'labelWidth', 'api', 'children'] as const;
 
 /**
  * 表单组件
  */
-export const Form = (
-  props?: JSX.HTMLAttributes<never> & {
-    /**
-     * 表单数据
-     */
-    data: object;
-
-    /**
-     * 表单校验规则
-     */
-    rules: ValidateRules;
-
-    /**
-     * label 对齐方式
-     */
-    align?: 'left' | 'top' | 'right';
-
-    /**
-     * 标签宽度
-     */
-    labelWidth?: string;
-
-    /**
-     * 外部调用接口
-     */
-    api?: (api: FormApi) => void;
-  },
-) => {
-  const [thisProps, restProps] = splitProps(props, ['data', 'rules', 'align', 'labelWidth', 'api', 'children']);
-
-  let form: HTMLFormElement;
-
-  onMount(() => {
-    // 初始化外部调用接口
-    props.api &&
-      props.api(
-        (form.api = {
-          validate: (filter?: (target: ValidateTarget) => void | boolean) =>
-            validate(form, thisProps.rules, thisProps.data, filter),
-          scrollToError: scrollToError.bind(form),
-          clearErrors: clearErrors.bind(form),
-        }),
-      );
-  });
-
+export const Form = (props?: JSX.HTMLAttributes<never> & FormProps) => {
   return (
-    <form ref={form as any} {...restProps}>
-      <FormContext.Provider value={thisProps}>{thisProps.children}</FormContext.Provider>
+    <form
+      ref={(dom) => {
+        // 初始化外部调用接口
+        props.api &&
+          props.api(
+            (dom.api = {
+              validate: (filter?: (target: ValidateTarget) => void | boolean) =>
+                validate(dom, props.rules, props.data, filter),
+              scrollToError: scrollToError.bind(dom),
+              clearErrors: clearErrors.bind(dom),
+            }),
+          );
+      }}
+      {...omitProps(props, OMIT_FORM_PROPS)}
+    >
+      <FormContext.Provider value={props}>{props.children}</FormContext.Provider>
     </form>
   );
 };

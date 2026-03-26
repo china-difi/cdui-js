@@ -1,6 +1,6 @@
 import { JSX } from '../jsx';
 import { layout } from '../layout';
-import { combineClass, splitProps } from '../reactive';
+import { omitProps } from '../reactive';
 import { disableAutoCloseEvent, hideMaskLayer, registerAutoClose, showMaskLayer } from '../dom';
 
 const POPUP_TOP_CLASS = 'popup-top';
@@ -149,10 +149,16 @@ const togglePopup = (dom: HTMLElement, onPopup?: (dom: HTMLElement) => void | fa
   event && event.stopPropagation();
 };
 
+const OMIT_PROPS = ['onPopup', 'api', 'children'] as const;
+
 /**
  * 弹出层外部访问接口
  */
 export interface PopupApi {
+  /**
+   * 是否已经弹出
+   */
+  popup: boolean;
   /**
    * 打开弹出框
    */
@@ -160,7 +166,7 @@ export interface PopupApi {
   /**
    * 关闭弹出框
    */
-  closePupup(): void;
+  closePopup(): void;
   /**
    * 显示或关闭弹出层
    */
@@ -185,15 +191,17 @@ export interface PopupProps {
  * 弹出层组件
  */
 export const Popup = (props?: JSX.HTMLAttributes<never> & PopupProps) => {
-  let [thisProps, restProps] = splitProps(props, ['onPopup', 'api', 'children']);
   let popup: HTMLElement;
 
   // 初始化外部调用接口
   props.api &&
     props.api({
-      openPopup: () => showPopup(popup, thisProps.onPopup),
-      closePupup: () => currentPopup.dom === popup && hidePopup(),
-      togglePopup: () => togglePopup(popup, thisProps.onPopup),
+      get popup() {
+        return currentPopup.dom === popup;
+      },
+      openPopup: () => showPopup(popup, props.onPopup),
+      closePopup: () => currentPopup.dom === popup && hidePopup(),
+      togglePopup: () => togglePopup(popup, props.onPopup),
     });
 
   return (
@@ -204,7 +212,7 @@ export const Popup = (props?: JSX.HTMLAttributes<never> & PopupProps) => {
       {...disableAutoCloseEvent}
       ontransitionend={() => currentPopup.dom === popup || (popup.style.display = 'none')}
     >
-      <div {...restProps}>{thisProps.children}</div>
+      <div {...omitProps(props, OMIT_PROPS)}>{props.children}</div>
     </div>
   );
 };

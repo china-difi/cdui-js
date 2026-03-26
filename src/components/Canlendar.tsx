@@ -1,6 +1,5 @@
-import { createSignal, combineClass, splitProps } from '../reactive';
-
 import { JSX } from '../jsx';
+import { createSignal, combineClass, omitProps } from '../reactive';
 import { Canleandar as i18n } from '../i18n';
 import { replaceTemplate } from '../template';
 import { For } from './For';
@@ -13,20 +12,20 @@ const renderDates = (
   from: number,
   to: number,
   className: string,
-  todayDate: Date,
-  selectedDate?: Date,
-  disableDate?: (year: number, month: number, date: number) => boolean,
+  todayValue: Date,
+  selectedValue?: Date,
+  disableFn?: (year: number, month: number, date: number) => boolean,
 ) => {
-  let today = todayDate.getFullYear() === year && todayDate.getMonth() === month ? todayDate.getDate() : -1;
+  let today = todayValue.getFullYear() === year && todayValue.getMonth() === month ? todayValue.getDate() : -1;
   let selected =
-    selectedDate && selectedDate.getFullYear() === year && selectedDate.getMonth() === month
-      ? selectedDate.getDate()
+    selectedValue && selectedValue.getFullYear() === year && selectedValue.getMonth() === month
+      ? selectedValue.getDate()
       : -1;
 
   for (let i = from; i <= to; i++) {
     items.push(
       `<span class="canlendar-date${className}${today === i ? ' today' : ''}${selected === i ? ' selected' : ''}${
-        disableDate && disableDate(year, month, i) ? ' disabled' : ''
+        disableFn && disableFn(year, month, i) ? ' disabled' : ''
       }" data-date="${year + '|' + month + '|' + i}">${i}</span>`,
     );
   }
@@ -38,9 +37,9 @@ const renderPrevMonthItems = (
   year: number,
   month: number,
   index: number,
-  todayDate: Date,
-  selectedDate?: Date,
-  disableDate?: (year: number, month: number, date: number) => boolean,
+  todayValue: Date,
+  selectedValue?: Date,
+  disableFn?: (year: number, month: number, date: number) => boolean,
 ) => {
   // 获取上月天数
   let days = new Date(year, month, 0).getDate();
@@ -52,7 +51,7 @@ const renderPrevMonthItems = (
     month = 11;
   }
 
-  renderDates(items, year, month, days - index + 1, days, ' prev-month', todayDate, selectedDate, disableDate);
+  renderDates(items, year, month, days - index + 1, days, ' prev-month', todayValue, selectedValue, disableFn);
 };
 
 const renderNextMonthItems = (
@@ -60,9 +59,9 @@ const renderNextMonthItems = (
   year: number,
   month: number,
   days: number,
-  todayDate: Date,
-  selectedDate?: Date,
-  disableDate?: (year: number, month: number, date: number) => boolean,
+  todayValue: Date,
+  selectedValue?: Date,
+  disableFn?: (year: number, month: number, date: number) => boolean,
 ) => {
   if (month < 11) {
     month++;
@@ -71,17 +70,17 @@ const renderNextMonthItems = (
     month = 0;
   }
 
-  renderDates(items, year, month, 1, days, ' next-month', todayDate, selectedDate, disableDate);
+  renderDates(items, year, month, 1, days, ' next-month', todayValue, selectedValue, disableFn);
 };
 
 const renderItems = (
-  showDate: Date,
-  selectedDate?: Date,
-  disableDate?: (year: number, month: number, date: number) => boolean,
+  currentValue: Date,
+  selectedValue?: Date,
+  disableFn?: (year: number, month: number, date: number) => boolean,
 ) => {
   let today = new Date();
-  let year = showDate.getFullYear();
-  let month = showDate.getMonth();
+  let year = currentValue.getFullYear();
+  let month = currentValue.getMonth();
   let firstDate = new Date(year, month, 1); // 获取当前月的第一天
 
   let firstWeek = firstDate.getDay();
@@ -92,17 +91,17 @@ const renderItems = (
   // 当前月第一天不是周一，渲染上月数据
   if (firstWeek !== 1) {
     index = firstWeek > 0 ? firstWeek - 1 : 6;
-    renderPrevMonthItems(items, year, month, index, today, selectedDate, disableDate);
+    renderPrevMonthItems(items, year, month, index, today, selectedValue, disableFn);
   }
 
   // 获取当前月的天数
   days = new Date(year, month + 1, 0).getDate();
   // 渲染本月日期
-  renderDates(items, year, month, 1, days, '', today, selectedDate, disableDate);
+  renderDates(items, year, month, 1, days, '', today, selectedValue, disableFn);
 
   // 当前月最后一天没有占满，渲染下月数据
   if ((index += days) < 42) {
-    renderNextMonthItems(items, year, month, 42 - index, today, selectedDate, disableDate);
+    renderNextMonthItems(items, year, month, 42 - index, today, selectedValue, disableFn);
   }
 
   return items.join('');
@@ -138,6 +137,8 @@ const formatMonth = (value: Date) => {
   return month > 9 ? month : '0' + month;
 };
 
+const OMIT_PROPS = ['class', 'value', 'onValueChange', 'disableFn'] as const;
+
 export const Canlendar = (
   props: Omit<JSX.HTMLAttributes<never>, 'children'> & {
     /**
@@ -151,27 +152,25 @@ export const Canlendar = (
     /**
      * 禁用函数
      */
-    disableDate?: (year: number, month: number, date: number) => boolean;
+    disableFn?: (year: number, month: number, date: number) => boolean;
   },
 ) => {
-  const [thisProps, restProps] = splitProps(props, ['class', 'value', 'onValueChange', 'disableDate']);
-
-  let domMonth: HTMLElement;
+  let domTitle: HTMLElement;
   let domBody: HTMLElement;
 
-  const [selectedDate, setSelectedDate] = createSignal(parseDate(thisProps.value));
-  const [showDate, setShowDate] = createSignal(selectedDate() || new Date());
+  const [selectedValue, setSelectedDate] = createSignal(parseDate(props.value));
+  const [currentValue, setCurrentValue] = createSignal(selectedValue() || new Date());
 
   return (
-    <div class={combineClass('canlendar', thisProps.class)} {...restProps}>
+    <div class={combineClass('canlendar', props.class)} {...omitProps(props, OMIT_PROPS)}>
       <div class="canlendar-header">
-        <div ref={domMonth as any} class="canlendar-month">
-          {replaceTemplate(i18n.Month, showDate().getFullYear(), formatMonth(showDate()))}
+        <div ref={domTitle as any} class="canlendar-title">
+          {replaceTemplate(i18n.Month, currentValue().getFullYear(), formatMonth(currentValue()))}
         </div>
-        <svg class="icon icon-s" aria-hidden={true} onclick={() => setShowDate(switchMonth(showDate(), -1))}>
+        <svg class="icon icon-s" aria-hidden={true} onclick={() => setCurrentValue(switchMonth(currentValue(), -1))}>
           <use href="#icon-backward"></use>
         </svg>
-        <svg class="icon icon-s" aria-hidden={true} onclick={() => setShowDate(switchMonth(showDate(), 1))}>
+        <svg class="icon icon-s" aria-hidden={true} onclick={() => setCurrentValue(switchMonth(currentValue(), 1))}>
           <use href="#icon-forward"></use>
         </svg>
       </div>
@@ -185,7 +184,7 @@ export const Canlendar = (
           let target = event.target as HTMLElement;
           let date, onValueChange;
 
-          if (target && (date = target.dataset.date) && (onValueChange = thisProps.onValueChange)) {
+          if (target && (date = target.dataset.date) && (onValueChange = props.onValueChange)) {
             let dom = domBody.querySelector('.selected') as HTMLElement;
 
             if (dom !== target) {
@@ -197,7 +196,7 @@ export const Canlendar = (
             }
           }
         }}
-        innerHTML={renderItems(showDate(), selectedDate(), thisProps.disableDate)}
+        innerHTML={renderItems(currentValue(), selectedValue(), props.disableFn)}
       ></div>
     </div>
   );

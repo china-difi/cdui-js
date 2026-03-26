@@ -10,7 +10,7 @@ export interface ResponseResult {
   /**
    * 自定义响应结果（type === 'custom' 时有效）
    */
-  custom?: any;
+  result?: any;
 }
 
 /**
@@ -89,9 +89,9 @@ const handleResponse = (response: Response, url: string, json: boolean, options?
   // 返回了异步对象
   return result
     ? result.then((result) => {
-        switch (result.type) {
+        switch (result && result.type) {
           case 'custom':
-            return result.custom || respondDefault(response, json);
+            return result.result;
 
           case 'retry':
             return sendInternal(url, json, options);

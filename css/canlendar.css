@@ -1,4 +1,5 @@
-.canlendar {
+.canlendar,
+.monthwidget {
   max-width: 380px;
   height: 320px;
   border-radius: 12px;
@@ -8,21 +9,25 @@
 }
 
 .canlendar-header,
-.canlendar-weeks {
+.canlendar-weeks,
+.monthwidget-header {
   display: flex;
   align-items: center;
   height: 36px;
   line-height: 36px;
 }
 
-.canlendar-month {
+.canlendar-title,
+.monthwidget-title {
   flex: auto;
   padding-left: 12px;
   font-weight: bold;
   font-size: 14px;
+  cursor: pointer;
 }
 
-.canlendar-header > .icon {
+.canlendar-header > .icon,
+.monthwidget-header > .icon {
   box-sizing: border-box;
   width: 40px;
   height: 100%;
@@ -40,7 +45,8 @@
   height: calc(100% - 72px);
 }
 
-.canlendar-date {
+.canlendar-date,
+.monthwidget-month {
   display: inline-flex;
   justify-content: center;
   align-items: center;
@@ -49,17 +55,22 @@
   cursor: pointer;
 }
 
-.canlendar-date.disabled {
+.canlendar-date.disabled,
+.monthwidget-month.disabled {
   cursor: not-allowed;
 }
 
 .canlendar-date.today,
-.canlendar-date.selected {
+.canlendar-date.selected,
+.monthwidget-month.today,
+.monthwidget-month.selected {
   position: relative;
 }
 
 .canlendar-date.today::before,
-.canlendar-date.selected::before {
+.canlendar-date.selected::before,
+.monthwidget-month.today::before,
+.monthwidget-month.selected::before {
   position: absolute;
   content: '';
   width: 40px;

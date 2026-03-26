@@ -1,9 +1,11 @@
-import { createSignal, splitProps } from 'solid-js';
+import { createSignal } from 'solid-js';
 
 import { JSX } from '../jsx';
-import { combineClass, defineProperty } from '../reactive';
+import { combineClass, defineProperty, omitProps } from '../reactive';
 
 const COLLAPSED_CLASS = 'collapsed';
+
+const OMIT_PROPS = ['class', 'collapsed', 'collapsedSize', 'getExpandedSize', 'useTransition', 'api'] as const;
 
 /**
  * 可收拢面板外部调用接口
@@ -52,15 +54,7 @@ export const CollapsiblePanel = (
 ) => {
   let ref: HTMLElement;
 
-  const [thisProps, restProps] = splitProps(props, [
-    'class',
-    'collapsed',
-    'collapsedSize',
-    'getExpandedSize',
-    'useTransition',
-    'api',
-  ]);
-  const [collapsed, setCollapsed] = createSignal(thisProps.collapsed || false);
+  const [collapsed, setCollapsed] = createSignal(props.collapsed || false);
 
   const transitionTo = (size: string, fromSize?: string) => {
     let style = ref.style;
@@ -85,22 +79,22 @@ export const CollapsiblePanel = (
 
       // 设置成收拢状态
       if (value) {
-        if (thisProps.useTransition) {
+        if (props.useTransition) {
           style.height = ref.offsetHeight + 'px';
 
           setTimeout(() => {
-            style.height = thisProps.collapsedSize || '';
+            style.height = props.collapsedSize || '';
             classList.add(COLLAPSED_CLASS);
           });
         } else {
-          style.height = thisProps.collapsedSize || '';
+          style.height = props.collapsedSize || '';
           classList.add(COLLAPSED_CLASS);
         }
       } else {
-        let getExpandedSize = thisProps.getExpandedSize;
+        let getExpandedSize = props.getExpandedSize;
 
         // 设置成展开状态
-        if (thisProps.useTransition) {
+        if (props.useTransition) {
           style.height = ref.offsetHeight + 'px';
 
           setTimeout(() => {
@@ -119,8 +113,8 @@ export const CollapsiblePanel = (
     }
   };
 
-  thisProps.api &&
-    thisProps.api(
+  props.api &&
+    props.api(
       defineProperty({ transitionTo }, 'collapsed', {
         get: collapsed,
         set: update,
@@ -130,8 +124,8 @@ export const CollapsiblePanel = (
   return (
     <div
       ref={ref as any}
-      class={combineClass('collapsed-panel', thisProps.collapsed && COLLAPSED_CLASS, thisProps.class)}
-      {...restProps}
+      class={combineClass('collapsed-panel', props.collapsed && COLLAPSED_CLASS, props.class)}
+      {...omitProps(props, OMIT_PROPS)}
     ></div>
   );
 };

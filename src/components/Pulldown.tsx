@@ -1,5 +1,5 @@
 // import { JSX } from '../jsx';
-// import { combineClass, onCleanup, onMount, splitProps } from '../reactive';
+// import { combineClass, onCleanup, onMount, omitProps } from '../reactive';
 // import { addEventListener, removeEventListener } from '../dom';
 
 // /**
@@ -118,13 +118,14 @@
 //   pulldownChildren = children;
 // };
 
+// const OMIT_PROPS = ['class', 'onrefresh', 'children'] as const;
+
 // /**
 //  * 下拉刷新
 //  *
 //  * @param props 属性集
 //  */
 // export const Pulldown = (props: JSX.HTMLAttributes<never> & { onrefresh: Function }) => {
-//   const [thisProps, restProps] = splitProps(props, ['class', 'onrefresh', 'children']);
 //   let ref;
 
 //   onMount(() => {
@@ -142,7 +143,7 @@
 //   });
 
 //   return (
-//     <div ref={ref} class={combineClass('pulldown', thisProps.class)} {...restProps}>
+//     <div ref={ref} class={combineClass('pulldown', props.class)} {...omitProps(props, OMIT_PROPS)}>
 //       {props.children ||
 //         pulldownChildren ||
 //         (pulldownChildren = (

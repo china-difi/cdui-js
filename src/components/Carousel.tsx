@@ -9,7 +9,7 @@ import {
   defineProperty,
   onCleanup,
   onMount,
-  splitProps,
+  omitProps,
 } from '../reactive';
 
 import { For } from './For';
@@ -47,6 +47,8 @@ if (isBrowser) {
     true,
   );
 }
+
+const OMIT_PROPS = ['class', 'each', 'children', 'autoplay', 'interval', 'vertical', 'api'] as const;
 
 /**
  * 轮播组件外部调用接口
@@ -101,15 +103,6 @@ export const Carousel = <T, U extends JSX.Element>(
     api?: (api: CarouselApi) => void;
   },
 ) => {
-  let [thisProps, restProps] = splitProps(props, [
-    'class',
-    'each',
-    'children',
-    'autoplay',
-    'interval',
-    'vertical',
-    'api',
-  ]);
   let [currentIndex, setCurrentIndex] = createSignal(0);
 
   let ref: HTMLElement;
@@ -121,15 +114,15 @@ export const Carousel = <T, U extends JSX.Element>(
   let autoplayTimer: any;
 
   // 获取滚动方向
-  const scrollType = createMemo(() => (thisProps.vertical ? 'scrollTop' : 'scrollLeft'));
-  const offsetType = createMemo(() => (thisProps.vertical ? 'offsetTop' : 'offsetLeft'));
-  const screenType = createMemo(() => (thisProps.vertical ? 'screenY' : 'screenX'));
+  const scrollType = createMemo(() => (props.vertical ? 'scrollTop' : 'scrollLeft'));
+  const offsetType = createMemo(() => (props.vertical ? 'offsetTop' : 'offsetLeft'));
+  const screenType = createMemo(() => (props.vertical ? 'screenY' : 'screenX'));
 
   // 滚动到指定索引
   const scrollTo = (index: number) => {
     let children = ref.children;
     let length = children.length;
-    let count = thisProps.each.length; // 真实的子项数量
+    let count = props.each.length; // 真实的子项数量
 
     if (index < 0) {
       index += count;
@@ -156,7 +149,7 @@ export const Carousel = <T, U extends JSX.Element>(
 
     if (index <= 0) {
       // 真实的子项数量
-      let count = thisProps.each.length;
+      let count = props.each.length;
 
       // 先滚动到对应节点的填充节点
       ref[scrollType()] = (ref.children[index + count] as HTMLElement)[offsetType()];
@@ -219,7 +212,7 @@ export const Carousel = <T, U extends JSX.Element>(
   const autoplay = () => {
     clearTimeout(autoplayTimer);
 
-    if (thisProps.autoplay !== false) {
+    if (props.autoplay !== false) {
       autoplayTimer = setTimeout(
         () => {
           if (!resizing) {
@@ -233,14 +226,14 @@ export const Carousel = <T, U extends JSX.Element>(
 
           autoplay();
         },
-        thisProps.interval > 3000 ? thisProps.interval : 3000,
+        props.interval > 3000 ? props.interval : 3000,
       );
     }
   };
 
   // 初始化外部访问接口
-  thisProps.api &&
-    thisProps.api(
+  props.api &&
+    props.api(
       defineProperty(
         {
           backward,
@@ -278,8 +271,12 @@ export const Carousel = <T, U extends JSX.Element>(
   });
 
   return (
-    <div ref={ref as any} class={combineClass('carousel scrollbar-hidden', thisProps.class)} {...restProps}>
-      <For each={fillItems(thisProps.each)}>{thisProps.children}</For>
+    <div
+      ref={ref as any}
+      class={combineClass('carousel scrollbar-hidden', props.class)}
+      {...omitProps(props, OMIT_PROPS)}
+    >
+      <For each={fillItems(props.each)}>{props.children}</For>
     </div>
   );
 };

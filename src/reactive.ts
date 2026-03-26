@@ -1,4 +1,6 @@
-import { Component, createEffect, createSignal, createUniqueId, lazy } from 'solid-js';
+import { Component, createEffect, createSignal, createUniqueId, lazy, splitProps } from 'solid-js';
+
+const getOwnPropertyNames = Object.getOwnPropertyNames;
 
 export const defineProperty = Object.defineProperty;
 export const defineProperties = Object.defineProperties;
@@ -81,6 +83,72 @@ export interface SSRRenderPage {
    */
   abort?: boolean;
 }
+
+/**
+ * 选择部分组件属性
+ *
+ * @param properties 组件属性集合
+ * @param pickPropertyNames 要选择的组件属性名集合
+ */
+export const pickProps = <T extends Record<any, any>, K extends readonly (keyof T)[]>(
+  props: T,
+  pickPropertyNames: K,
+): Pick<T, K[number]> => {
+  // return splitProps(props, pickPropertyNames)[0] as any;
+
+  let result: any = {};
+
+  for (let i = 0, l = pickPropertyNames.length; i < l; i++) {
+    let name = pickPropertyNames[i];
+
+    result[name] = props[name];
+  }
+
+  return result as Pick<T, K[number]>;
+
+  // return new Proxy(props, {
+  //   ownKeys(target) {
+  //     return getOwnPropertyNames(target).filter((key) => pickPropertyNames.indexOf(key) >= 0);
+  //   },
+  // });
+};
+
+/**
+ * 排除部分组件属性
+ *
+ * @param props 组件属性集合
+ * @param omitPropertyNames 要排除的组件属性名集合
+ */
+export const omitProps = <T extends Record<any, any>, K extends readonly (keyof T)[]>(
+  props: T,
+  omitPropertyNames: K,
+): Omit<T, K[number]> => {
+  return splitProps(props, omitPropertyNames)[1] as any;
+
+  // let names = getOwnPropertyNames(props);
+  // let result = {};
+
+  // for (let i = 0, l = names.length; i < l; i++) {
+  //   let name = names[i];
+
+  //   if (omitPropertyNames.indexOf(name) < 0) {
+  //     // result[name] = props[name];
+  //     defineProperty(result, name, {
+  //       get() {
+  //         return props[name];
+  //       },
+  //     });
+  //   }
+  // }
+
+  // return result as Omit<T, K[number]>;
+
+  // return new Proxy(props, {
+  //   ownKeys(target) {
+  //     return getOwnPropertyNames(target).filter((key) => omitPropertyNames.indexOf(key) < 0);
+  //   },
+  // }) as unknown as Omit<T, K[number]>;
+};
 
 /**
  * 信息参数（不对比值变化）

@@ -1,7 +1,10 @@
 import { JSX } from '../jsx';
-import { combineClass, splitProps } from '../reactive';
+import { combineClass, omitProps, useContext, watch } from '../reactive';
 import { disableAutoCloseEvent } from '../dom';
 import { Popup, PopupApi, PopupProps } from './Popup';
+import { FormItemContext } from './provider';
+
+const OMIT_PROPS = ['class', 'value', 'readonly', 'popupOnFocus', 'popup', 'onPopup', 'api', 'children'] as const;
 
 /**
  * 下拉框组件
@@ -12,7 +15,13 @@ export const ComboBox = (
       /**
        * 值
        */
-      value?: string;
+      value?: any;
+      /**
+       * 值样式
+       *
+       * @param value 当前值
+       */
+      format?(value: any): string;
       /**
        * 是否只读
        */
@@ -27,39 +36,41 @@ export const ComboBox = (
       popup?: Omit<JSX.HTMLAttributes<never>, 'children'>;
     },
 ) => {
-  let [thisProps, restProps] = splitProps(props, [
-    'class',
-    'value',
-    'readonly',
-    'popupOnFocus',
-    'popup',
-    'onPopup',
-    'api',
-    'children',
-  ]);
   let popup: PopupApi;
 
   const initApi = (api) => {
     popup = api;
-    thisProps.api && thisProps.api(popup);
+    props.api && props.api(popup);
+  };
+
+  const formItem = useContext(FormItemContext);
+
+  const initFormItem = (dom: HTMLInputElement) => {
+    watch(
+      () => props.value,
+      (value) => formItem.setValue(value),
+    );
+
+    formItem.init(dom);
   };
 
   return (
-    <div class={combineClass('combobox', thisProps.class)} {...restProps}>
+    <div class={combineClass('combobox', props.class)} {...omitProps(props, OMIT_PROPS)}>
       <div class="combobox-host" {...disableAutoCloseEvent}>
         <input
+          ref={formItem && initFormItem}
           class="combobox-input"
-          value={thisProps.value || ''}
-          readonly={thisProps.readonly}
-          onfocus={() => thisProps.popupOnFocus && popup.openPopup()}
-          onclick={() => thisProps.readonly && !thisProps.popupOnFocus && popup.togglePopup()}
+          value={props.format ? props.format(props.value) : '' + (props.value || '')}
+          readonly={props.readonly}
+          onfocus={() => props.popupOnFocus && popup.openPopup()}
+          onclick={() => props.readonly && !props.popupOnFocus && popup.togglePopup()}
         ></input>
         <svg class="icon icon-s" aria-hidden={true} onclick={() => popup.togglePopup()}>
           <use href="#icon-dropdown"></use>
         </svg>
       </div>
-      <Popup api={initApi} onPopup={thisProps.onPopup} {...thisProps.popup}>
-        {thisProps.children}
+      <Popup api={initApi} onPopup={props.onPopup} {...props.popup}>
+        {props.children}
       </Popup>
     </div>
   );

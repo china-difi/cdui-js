@@ -1,0 +1,75 @@
+.mobile-date-picker {
+  display: flex;
+  flex-direction: row;
+  width: 100%;
+  min-height: calc(44px * 5);
+  position: relative;
+  box-sizing: border-box;
+  user-select: none;
+}
+
+.mobile-date-picker-column {
+  flex: 1;
+  position: relative;
+  min-width: 0;
+}
+
+.mobile-date-picker-column::before {
+  content: '';
+  pointer-events: none;
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  z-index: 1;
+  background: linear-gradient(
+      to bottom,
+      rgba(255, 255, 255, 0.95) 0%,
+      rgba(255, 255, 255, 0) calc(50% - 22px)
+    ),
+    linear-gradient(
+      to top,
+      rgba(255, 255, 255, 0.95) 0%,
+      rgba(255, 255, 255, 0) calc(50% - 22px)
+    );
+}
+
+.mobile-date-picker-column::after {
+  content: '';
+  pointer-events: none;
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  height: 44px;
+  box-sizing: border-box;
+  border-top: 1px solid #e4e4e4;
+  border-bottom: 1px solid #e4e4e4;
+  z-index: 2;
+}
+
+.mobile-date-picker-wheel {
+  --mdp-item-h: 44px;
+  height: calc(var(--mdp-item-h) * 5);
+  overflow-y: auto;
+  touch-action: pan-y;
+  -webkit-overflow-scrolling: touch;
+}
+
+.mobile-date-picker-wheel-inner {
+  position: relative;
+  width: 100%;
+}
+
+.mobile-date-picker-item {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: var(--mdp-item-h);
+  line-height: var(--mdp-item-h);
+  text-align: center;
+  font-size: 16px;
+  color: #1b212d;
+}

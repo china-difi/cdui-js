@@ -1,8 +1,24 @@
 import { JSX } from '../jsx';
-import { combineClass, splitProps } from '../reactive';
+import { combineClass, omitProps, useContext } from '../reactive';
+import { FormItemContext } from './provider';
 
-export const TextBox = (props?: JSX.SvgSVGAttributes<never>) => {
-  let [thisProps, restProps] = splitProps(props, ['class']);
+const OMIT_PROPS = ['class', 'value', 'onchange'] as const;
 
-  return <input type="text" class={combineClass('textbox', thisProps.class)} {...restProps}></input>;
+export const TextBox = (props?: JSX.InputHTMLAttributes<never>) => {
+  const formItem = useContext(FormItemContext);
+
+  const initFormItem = (dom: HTMLInputElement) => {
+    dom.addEventListener('change', () => formItem.setValue(dom.value));
+    formItem.init(dom);
+  };
+
+  return (
+    <input
+      ref={formItem && initFormItem}
+      type="text"
+      class={combineClass('textbox', props.class)}
+      value={formItem ? formItem.getValue() : props.value}
+      {...omitProps(props, OMIT_PROPS)}
+    ></input>
+  );
 };

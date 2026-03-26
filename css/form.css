@@ -1,11 +1,11 @@
 .form-align-left,
 .form-align-right {
   display: flex;
-  align-items: center;
 }
 
 .form-align-left > label,
 .form-align-right > label {
+  margin-top: 4px;
   width: 100px;
 }
 
@@ -16,4 +16,10 @@
 
 .form-align-right > label {
   padding-left: 8px;
+}
+
+.form-error {
+  margin-top: 4px;
+  font-size: 12px;
+  color: #ff295a;
 }
