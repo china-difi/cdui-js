@@ -1,0 +1,85 @@
+.datewidget {
+  max-width: 380px;
+  height: 320px;
+  border-radius: 12px;
+  padding: 16px;
+  user-select: none;
+  font-size: 16px;
+}
+
+.datewidget-header {
+  display: flex;
+  align-items: center;
+  height: 36px;
+  line-height: 36px;
+}
+
+.datewidget-title {
+  flex: auto;
+  padding-left: 12px;
+  font-weight: bold;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.datewidget-header > .icon {
+  box-sizing: border-box;
+  width: 40px;
+  height: 100%;
+  padding: 0 11px;
+  cursor: pointer;
+}
+
+.datewidget-body {
+  height: calc(100% - 36px);
+}
+
+.datewidget-item {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  width: 25%;
+  height: 25%;
+  cursor: pointer;
+}
+
+.datewidget-item.disabled {
+  cursor: not-allowed;
+}
+
+.datewidget-item.today,
+.datewidget-item.selected {
+  position: relative;
+}
+
+.datewidget-item.today::before,
+.datewidget-item.selected::before {
+  position: absolute;
+  content: '';
+  width: 60px;
+  height: 60px;
+  border-radius: 60px;
+  z-index: -1;
+}
+
+.canlendar-weeks > span {
+  flex: auto;
+  text-align: center;
+  vertical-align: middle;
+}
+
+.canlendar-body {
+  height: calc(100% - 72px);
+  font-size: 12px;
+}
+
+.canlendar-body .datewidget-item {
+  width: 14.28%;
+  height: 16.66%;
+}
+
+.canlendar-body .datewidget-item.today::before,
+.canlendar-body .datewidget-item.selected::before {
+  width: 40px;
+  height: 40px;
+}

@@ -24,7 +24,7 @@ const renderDates = (
 
   for (let i = from; i <= to; i++) {
     items.push(
-      `<span class="canlendar-date${className}${today === i ? ' today' : ''}${selected === i ? ' selected' : ''}${
+      `<span class="datewidget-item${className}${today === i ? ' today' : ''}${selected === i ? ' selected' : ''}${
         disableFn && disableFn(year, month, i) ? ' disabled' : ''
       }" data-date="${year + '|' + month + '|' + i}">${i}</span>`,
     );
@@ -51,7 +51,7 @@ const renderPrevMonthItems = (
     month = 11;
   }
 
-  renderDates(items, year, month, days - index + 1, days, ' prev-month', todayValue, selectedValue, disableFn);
+  renderDates(items, year, month, days - index + 1, days, ' prev-block', todayValue, selectedValue, disableFn);
 };
 
 const renderNextMonthItems = (
@@ -70,7 +70,7 @@ const renderNextMonthItems = (
     month = 0;
   }
 
-  renderDates(items, year, month, 1, days, ' next-month', todayValue, selectedValue, disableFn);
+  renderDates(items, year, month, 1, days, ' next-block', todayValue, selectedValue, disableFn);
 };
 
 const renderItems = (
@@ -139,6 +139,9 @@ const formatMonth = (value: Date) => {
 
 const OMIT_PROPS = ['class', 'value', 'onValueChange', 'disableFn'] as const;
 
+/**
+ * 日历组件
+ */
 export const Canlendar = (
   props: Omit<JSX.HTMLAttributes<never>, 'children'> & {
     /**
@@ -158,14 +161,14 @@ export const Canlendar = (
   let domTitle: HTMLElement;
   let domBody: HTMLElement;
 
-  const [selectedValue, setSelectedDate] = createSignal(parseDate(props.value));
+  const [selectedValue, setSelectedValue] = createSignal(parseDate(props.value));
   const [currentValue, setCurrentValue] = createSignal(selectedValue() || new Date());
 
   return (
-    <div class={combineClass('canlendar', props.class)} {...omitProps(props, OMIT_PROPS)}>
-      <div class="canlendar-header">
-        <div ref={domTitle as any} class="canlendar-title">
-          {replaceTemplate(i18n.Month, currentValue().getFullYear(), formatMonth(currentValue()))}
+    <div class={combineClass('canlendar datewidget', props.class)} {...omitProps(props, OMIT_PROPS)}>
+      <div class="datewidget-header canlendar-header">
+        <div ref={domTitle as any} class="datewidget-title">
+          {replaceTemplate(i18n.Title, currentValue().getFullYear(), formatMonth(currentValue()))}
         </div>
         <svg class="icon icon-s" aria-hidden={true} onclick={() => setCurrentValue(switchMonth(currentValue(), -1))}>
           <use href="#icon-backward"></use>
@@ -174,25 +177,30 @@ export const Canlendar = (
           <use href="#icon-forward"></use>
         </svg>
       </div>
-      <div class="canlendar-weeks">
+      <div class="datewidget-header canlendar-weeks">
         <For each={i18n.Weeks}>{(item) => <span>{item}</span>}</For>
       </div>
       <div
         ref={domBody as any}
-        class="canlendar-body"
+        class="datewidget-body canlendar-body"
         onclick={(event) => {
           let target = event.target as HTMLElement;
-          let date, onValueChange;
+          let date;
 
-          if (target && (date = target.dataset.date) && (onValueChange = props.onValueChange)) {
-            let dom = domBody.querySelector('.selected') as HTMLElement;
+          while (target && target !== domBody) {
+            if ((date = target.dataset.date)) {
+              // 没有选中
+              if (!target.classList.contains('selected')) {
+                date = date.split('|');
+                date = new Date(date[0] | 0, date[1] | 0, date[2] | 0);
 
-            if (dom !== target) {
-              date = date.split('|');
-              date = new Date(date[0] | 0, date[1] | 0, date[2] | 0);
+                setSelectedValue(date);
+                props.onValueChange && props.onValueChange(date);
+              }
 
-              setSelectedDate(date);
-              onValueChange(date);
+              break;
+            } else {
+              target = target.parentNode as HTMLElement;
             }
           }
         }}

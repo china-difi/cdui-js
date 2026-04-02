@@ -1,5 +1,5 @@
 import { isBrowser } from './dom';
-import { reactive } from './reactive';
+import { batch, reactive } from './reactive';
 
 export interface Location {
   /**
@@ -98,10 +98,12 @@ export const updateURL = (path: string, search?: string, hash?: string) => {
   location.hash = hash || '';
 
   if (location.path !== path || location.search !== search) {
-    location.path = path;
-    location.paths = path.match(/\/[^/]*/g) || [];
-    location.search = search || '';
-    location.query = search ? parseQuery(search) : {};
+    batch(() => {
+      location.path = path;
+      location.paths = path.match(/\/[^/]*/g) || [];
+      location.search = search || '';
+      location.query = search ? parseQuery(search) : {};
+    });
   }
 };
 

@@ -15,9 +15,7 @@ import {
 import { For } from './For';
 import { Icon } from './Icon';
 
-const CLASS_NAME = 'carousel-vertical';
-
-const EVENT_OPTIONS = { passive: true, capture: true };
+const EVENT_OPTIONS = { passive: false, capture: true };
 
 const DOTS = new Array(100).join('0').split('');
 
@@ -48,7 +46,7 @@ if (isBrowser) {
   );
 }
 
-const OMIT_PROPS = ['class', 'each', 'children', 'autoplay', 'interval', 'vertical', 'api'] as const;
+const OMIT_PROPS = ['class', 'each', 'children', 'autoplay', 'interval', 'disabledScroll', 'api'] as const;
 
 /**
  * 轮播组件外部调用接口
@@ -94,9 +92,9 @@ export const Carousel = <T, U extends JSX.Element>(
      */
     interval?: number;
     /**
-     * 是否竖直滚动
+     * 是否禁止滚动（触控时不允许上下滚动）
      */
-    vertical?: boolean;
+    disabledScroll?: boolean;
     /**
      * 外部调用接口
      */
@@ -112,11 +110,6 @@ export const Carousel = <T, U extends JSX.Element>(
   let pressdownScroll: number;
   // 自动滚动计时器
   let autoplayTimer: any;
-
-  // 获取滚动方向
-  const scrollType = createMemo(() => (props.vertical ? 'scrollTop' : 'scrollLeft'));
-  const offsetType = createMemo(() => (props.vertical ? 'offsetTop' : 'offsetLeft'));
-  const screenType = createMemo(() => (props.vertical ? 'screenY' : 'screenX'));
 
   // 滚动到指定索引
   const scrollTo = (index: number) => {
@@ -135,7 +128,7 @@ export const Carousel = <T, U extends JSX.Element>(
     animateScrollIntoView(ref, children[index % length] as HTMLElement).then(() => {
       if (index >= count) {
         // 滚动到对应节点
-        ref[scrollType()] = (children[index - count] as HTMLElement)[offsetType()];
+        ref.scrollLeft = (children[index - count] as HTMLElement).offsetLeft;
         // 调整到指定节点
         index -= count;
       }
@@ -152,7 +145,7 @@ export const Carousel = <T, U extends JSX.Element>(
       let count = props.each.length;
 
       // 先滚动到对应节点的填充节点
-      ref[scrollType()] = (ref.children[index + count] as HTMLElement)[offsetType()];
+      ref.scrollLeft = (ref.children[index + count] as HTMLElement).offsetLeft;
       // 调整到指定节点
       index += count;
     }
@@ -174,21 +167,31 @@ export const Carousel = <T, U extends JSX.Element>(
     checkFirstIndex();
 
     // 记录按下时状态
-    pressdown = (event.changedTouches[0] || event.touches[0])[screenType()];
-    pressdownScroll = ref[scrollType()];
+    pressdown = (event.changedTouches[0] || event.touches[0]).screenX;
+    pressdownScroll = ref.scrollLeft;
 
     // 取消自动播放
     clearTimeout(autoplayTimer);
+
+    if (props.disabledScroll) {
+      event.preventDefault();
+      return false;
+    }
   };
 
   const ontouchmove = (event: TouchEvent) => {
     if (pressdown >= 0) {
-      ref[scrollType()] = pressdownScroll - ((event.changedTouches[0] || event.touches[0])[screenType()] - pressdown);
+      ref.scrollLeft = pressdownScroll - ((event.changedTouches[0] || event.touches[0]).screenX - pressdown);
+    }
+
+    if (props.disabledScroll) {
+      event.preventDefault();
+      return false;
     }
   };
 
   const ontouchend = (event: TouchEvent) => {
-    let distance = (event.changedTouches[0] || event.touches[0])[screenType()] - pressdown;
+    let distance = (event.changedTouches[0] || event.touches[0]).screenX - pressdown;
     let index = currentIndex();
 
     // 清除按下状态
@@ -200,12 +203,17 @@ export const Carousel = <T, U extends JSX.Element>(
     } else if (distance < -20) {
       // 如果是第一个位置,则恢复滚动位置
       if (index === 0) {
-        ref[scrollType()] = ref.children[offsetType()];
+        ref.scrollLeft = (ref.children[0] as HTMLElement).offsetLeft;
       }
 
       scrollTo(index + 1);
     } else {
       animateScrollIntoView(ref, ref.children[index % ref.children.length] as HTMLElement);
+    }
+
+    if (props.disabledScroll) {
+      event.preventDefault();
+      return false;
     }
   };
 
@@ -243,18 +251,6 @@ export const Carousel = <T, U extends JSX.Element>(
         { get: currentIndex },
       ) as CarouselApi,
     );
-
-  createEffect(() => {
-    let classList = ref.classList;
-
-    if (props.vertical) {
-      if (!classList.contains(CLASS_NAME)) {
-        classList.add();
-      }
-    } else {
-      classList.remove(CLASS_NAME);
-    }
-  });
 
   createEffect(autoplay);
 

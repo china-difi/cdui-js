@@ -59,10 +59,7 @@ export const FormPage = () => {
         {(item) => (
           <FormItem field={item.field} label={item.label} required={item.required}>
             <div>
-              <input type="text" value={state.b}></input>
-              {/* <item.Input></item.Input> */}
-              <TextBox></TextBox>
-              <TextBox></TextBox>
+              <item.Input></item.Input>
             </div>
           </FormItem>
         )}

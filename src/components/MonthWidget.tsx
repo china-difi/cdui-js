@@ -1,36 +1,61 @@
-import { createSignal, combineClass } from '../reactive';
-
 import { JSX } from '../jsx';
-import { Canleandar as i18n } from '../i18n';
+import { MonthWidget as i18n } from '../i18n';
 import { replaceTemplate } from '../template';
+import { createSignal, combineClass } from '../reactive';
 import { For } from './For';
-
-const formatMonth = (month: number) => {
-  return month > 9 ? month : '0' + month;
-};
 
 const getCurrentMonth = () => {
   let date = new Date();
-  return [date.getFullYear(), date.getMonth() + 1];
+  return [date.getFullYear(), date.getMonth() + 1] as [year: number, month: number];
 };
 
-const switchMonth = (value: [year: number, month: number], offset: 1 | -1) => {
-  let year = value[0];
-  let month = value[1] + offset;
+const MONTH_LIST = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16];
 
-  if (month === 0) {
-    month = 12;
-    year--;
-  } else if (month > 12) {
-    month = 1;
-    year++;
+const MonthItem = (props: {
+  value: number;
+  selectedValue: [year: number, month: number];
+  currentValue: [year: number, month: number];
+  onclick: (event: Event) => void;
+  disableFn?: (year: number, month: number) => boolean;
+}) => {
+  let year = 0;
+  let month = props.value;
+
+  if (month > 12) {
+    year = 1;
+    month -= 12;
   }
 
-  return [year, month];
+  const checkCurrent = () => {
+    const today = new Date();
+    const currentValue = props.currentValue;
+
+    return today.getFullYear() === currentValue[0] + year && today.getMonth() + 1 === month;
+  };
+
+  const checkSelected = () => {
+    let selectedValue = props.selectedValue;
+    const currentValue = props.currentValue;
+
+    return selectedValue && selectedValue[0] === currentValue[0] + year && selectedValue[1] === month;
+  };
+
+  return (
+    <span
+      class={`datewidget-item${year ? ' next-block' : ''}${checkCurrent() ? ' today' : ''}${
+        checkSelected() ? ' selected' : ''
+      }${props.disableFn && props.disableFn(props.currentValue[0] + year, month) ? ' disabled' : ''}`}
+      data-month={`${year}|${month}`}
+      onclick={props.onclick}
+    >
+      {replaceTemplate(i18n.Format, month)}
+    </span>
+  );
 };
 
-const MONTH_LIST = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
-
+/**
+ * 月份组件
+ */
 export const MonthWidget = (
   props: Omit<JSX.HTMLAttributes<never>, 'children'> & {
     /**
@@ -44,48 +69,61 @@ export const MonthWidget = (
     /**
      * 禁用函数
      */
-    disableFn?: (year: number, month: number, date: number) => boolean;
+    disableFn?: (year: number, month: number) => boolean;
   },
 ) => {
   let domTitle: HTMLElement;
   let domBody: HTMLElement;
 
-  const [selectedValue, setSelectedDate] = createSignal(props.value);
+  const [selectedValue, setSelectedValue] = createSignal(props.value);
   const [currentValue, setCurrentValue] = createSignal(selectedValue() || getCurrentMonth());
 
+  const onclick = (event: Event) => {
+    let target = event.currentTarget as HTMLElement;
+    let month = target.dataset.month as any;
+
+    // 没有选中
+    if (month && !target.classList.contains('selected')) {
+      month = month.split('|');
+      month = [currentValue()[0] + (month[0] | 0), month[1] | 0];
+
+      setSelectedValue(month);
+      props.onValueChange && props.onValueChange(month);
+    }
+  };
+
   return (
-    <div>
-      <div class="monthwidget-header">
-        <div ref={domTitle as any} class="monthwidget-title">
-          {replaceTemplate(i18n.Month, currentValue()[0], formatMonth(currentValue()[1]))}
+    <div class={combineClass('monthwidget datewidget', props.class)}>
+      <div class="datewidget-header">
+        <div ref={domTitle as any} class="datewidget-title">
+          {replaceTemplate(i18n.Title, currentValue()[0])}
         </div>
-        <svg class="icon icon-s" aria-hidden={true} onclick={() => setCurrentValue(switchMonth(selectedValue(), -1))}>
+        <svg
+          class="icon icon-s"
+          aria-hidden={true}
+          onclick={() => setCurrentValue([currentValue()[0] - 1, currentValue()[1]])}
+        >
           <use href="#icon-backward"></use>
         </svg>
-        <svg class="icon icon-s" aria-hidden={true} onclick={() => setCurrentValue(switchMonth(selectedValue(), 1))}>
+        <svg
+          class="icon icon-s"
+          aria-hidden={true}
+          onclick={() => setCurrentValue([currentValue()[0] + 1, currentValue()[1]])}
+        >
           <use href="#icon-forward"></use>
         </svg>
       </div>
-      <div
-        ref={domBody as any}
-        class="monthwidget-body"
-        onclick={(event) => {
-          let target = event.target as HTMLElement;
-          let value, onValueChange;
-
-          if (target && (onValueChange = props.onValueChange)) {
-            let dom = domBody.querySelector('.selected') as HTMLElement;
-
-            if (dom !== target) {
-              value = [currentValue()[0], +target.textContent];
-
-              setSelectedDate(value);
-              onValueChange(value);
-            }
-          }
-        }}
-      >
-        <For each={MONTH_LIST}>{(item) => <span>{item}</span>}</For>
+      <div ref={domBody as any} class="datewidget-body">
+        <For each={MONTH_LIST}>
+          {(item) => (
+            <MonthItem
+              value={item}
+              selectedValue={selectedValue()}
+              currentValue={currentValue()}
+              onclick={onclick}
+            ></MonthItem>
+          )}
+        </For>
       </div>
     </div>
   );

@@ -1,6 +1,6 @@
 {
   "Canlendar": {
-    "Month": "${0}年${1}月",
+    "Title": "${0}年${1}月",
     "Weeks": [
       "一",
       "二",
@@ -10,6 +10,13 @@
       "六",
       "日"
     ]
+  },
+  "MonthWidget": {
+    "Title": "${0}年",
+    "Format": "${0}月"
+  },
+  "YearWidget": {
+    "Title": "${0} - ${1}"
   },
   "Form": {
     "Required": "不能为空",

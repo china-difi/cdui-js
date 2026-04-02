@@ -287,16 +287,17 @@
 .combobox:has(.combobox-input:focus) { border: 1px solid #1b212d; }
 
 
-# canlendar 日历
+# canlendar monthwidget yearwidget 日历 年月 年
 
-.canlendar { border: 1px solid #e4e4e4; }
-.canlendar-header > .icon { stroke: #1b212d; }
+.datewidget { border: 1px solid #e4e4e4; }
+.datewidget-header > .icon { stroke: #1b212d; }
+.datewidget-item.disabled { color: #e4e4e4; }
+.datewidget-item.prev-block, .datewidget-item.next-block { color: #888f97; }
+.datewidget-item.today::before { background: #f5f5f5; }
+.datewidget-item.selected { color: white; }
+.datewidget-item.selected::before { background: #ff4000; }
+
 .canlendar-weeks > span { color: #888f97; }
-.canlendar-date.disabled { color: #e4e4e4; }
-.canlendar-date.prev-month, .canlendar-date.next-month { color: #888f97; }
-.canlendar-date.today::before { background: #f5f5f5; }
-.canlendar-date.selected { color: white; }
-.canlendar-date.selected::before { background: #ff4000; }
 
 
 # datepicker 日期选择
