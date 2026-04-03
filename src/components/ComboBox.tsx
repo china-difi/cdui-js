@@ -38,11 +38,6 @@ export const ComboBox = (
 ) => {
   let popup: PopupApi;
 
-  const initApi = (api) => {
-    popup = api;
-    props.api && props.api(popup);
-  };
-
   const formItem = useContext(FormItemContext);
 
   const initFormItem = (dom: HTMLInputElement) => {
@@ -69,7 +64,14 @@ export const ComboBox = (
           <use href="#icon-dropdown"></use>
         </svg>
       </div>
-      <Popup api={initApi} onPopup={props.onPopup} {...props.popup}>
+      <Popup
+        api={(api) => {
+          popup = api;
+          props.api && props.api(popup);
+        }}
+        onPopup={props.onPopup}
+        {...props.popup}
+      >
         {props.children}
       </Popup>
     </div>

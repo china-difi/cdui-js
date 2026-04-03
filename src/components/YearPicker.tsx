@@ -11,7 +11,7 @@ export const YearPicker = (
     /**
      * 值变更事件
      */
-    onValueChange?: (value: Date) => void;
+    onchange?: (event: CustomEvent<number>) => void;
     /**
      * 禁用函数
      */

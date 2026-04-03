@@ -1,33 +1,40 @@
 .popup {
-  position: absolute;
-  top: calc(100% + 4px);
-  left: -1px;
-  z-index: 100;
-  /* 不允许内边距，否则动画的高度不能小于内边距 */
-  padding: 0 !important;
+  position: fixed;
+  z-index: 9;
+  /* 不允许边框和内边距，否则动画的高度不能小于内边距 */
+  border: none !important;
+  padding: none !important;
   will-change: height;
   transition: height 0.2s linear;
   overflow: hidden;
 }
 
-.popup-top {
-  top: auto;
-  bottom: calc(100% + 4px);
+.popup-fixed-left,
+.popup-fixed-right {
+  display: flex;
+  align-items: center;
+  height: 100%;
 }
 
-.popup-right {
-  left: auto;
+.popup-fixed-left {
+  left: 0;
+}
+
+.popup-fixed-right {
   right: 0;
 }
 
-.le-480 .popup {
-  position: fixed;
-  top: auto;
+.popup-fixed-top,
+.popup-fixed-bottom {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.popup-fixed-top {
+  top: 0;
+}
+
+.popup-fixed-bottom {
   bottom: 0;
-  left: -1px;
-  right: -1px;
-  width: 100% !important;
-  max-width: 100% !important;
-  max-height: 80%;
-  border-radius: 12px 12px 0 0;
 }

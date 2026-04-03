@@ -7,12 +7,12 @@ export const CanlendarPage = () => {
     <div>
       <Canlendar
         value={new Date()}
-        onValueChange={(date) => {
-          console.log(date);
+        onchange={(event) => {
+          console.log(event.detail);
         }}
       ></Canlendar>
-      <MonthWidget></MonthWidget>
-      <YearWidget></YearWidget>
+      {/* <MonthWidget></MonthWidget>
+      <YearWidget></YearWidget> */}
     </div>
   );
 };

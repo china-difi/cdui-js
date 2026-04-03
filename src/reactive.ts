@@ -190,6 +190,9 @@ function arrayProxyGetHandler(target: any, property: any, receiver) {
 
   // 拦截索引访问
   if (index >= 0) {
+    // 收集依赖
+    this.signal[0]();
+
     // 简单值
     if (typeof value !== 'object' || !value) {
       return value;

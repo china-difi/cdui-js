@@ -466,6 +466,7 @@ const validate = async (
 
       if (error) {
         showError(child, error);
+        result = false;
       } else {
         removeError(child);
       }

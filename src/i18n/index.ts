@@ -13,7 +13,7 @@ export let MonthWidget = i18n.MonthWidget;
 /**
  * 日历
  */
-export let Canleandar = i18n.Canlendar;
+export let Canlendar = i18n.Canlendar;
 
 /**
  * 表单
@@ -28,6 +28,6 @@ export let Form = i18n.Form;
 export const switchLanguage = (data: typeof i18n) => {
   YearWidget = i18n.YearWidget;
   MonthWidget = i18n.MonthWidget;
-  Canleandar = i18n.Canlendar;
+  Canlendar = i18n.Canlendar;
   Form = i18n.Form;
 };

@@ -1,15 +1,16 @@
 import { createRoot } from 'solid-js';
 
-import { JSX } from '../jsx';
+import { JSX } from './jsx';
+import { hideMaskLayer, showMaskLayer } from './dom';
 
 /**
  * 对话框
  */
 export type Dialog = HTMLElement & {
   /**
-   * 关闭对话框方法
+   * 关闭对话框
    */
-  close(): void;
+  close(destroy?: boolean): void;
 };
 
 /**
@@ -22,13 +23,19 @@ export const showDialog = (component: () => JSX.Element): Dialog => {
   return createRoot((dispose) => {
     let body = document.body;
     let dialog = component() as Dialog;
+    let style = dialog.style;
 
-    dialog.style.cssText = 'position:fixed;z-index:9';
+    style.position = 'fixed';
+    style.zIndex = '9';
+
+    showMaskLayer();
+
     body.appendChild(dialog);
 
-    dialog.close = () => {
+    dialog.close = (destroy?: boolean) => {
+      hideMaskLayer();
       body.removeChild(dialog);
-      dispose();
+      destroy !== false && dispose();
     };
 
     return dialog;

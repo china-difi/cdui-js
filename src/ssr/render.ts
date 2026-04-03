@@ -69,7 +69,7 @@ const renderToStringAsync = async <T>(context: ServerContext, fn: () => T) => {
  */
 const renderPage = async (
   App: Component<any>,
-  languages: { [key: string]: any },
+  i18n: { [key: string]: any },
   language: string,
   root: string,
   template: string,
@@ -90,8 +90,8 @@ const renderPage = async (
   if (language !== 'en') {
     template = template.replace('lang="en"', 'lang="' + language + '"');
 
-    if (languages[language]) {
-      scripts.push('<script type="text/javascript">window.I18N=' + JSON.stringify(languages[language]) + '</script>');
+    if (i18n[language]) {
+      scripts.push('<script type="text/javascript">window.I18N=' + JSON.stringify(i18n[language]) + '</script>');
     }
   }
 
@@ -138,7 +138,7 @@ export const SSR_ERRORS = [];
  */
 export const renderSSRPages = async (
   App: Component<any>,
-  languages: { [key: string]: any },
+  i18n: { [key: string]: any },
   language: string,
   root: string,
   template: string,
@@ -154,7 +154,7 @@ export const renderSSRPages = async (
 
         console.log(`rendering：${language} ${page.path}`);
 
-        await renderPage(App, languages, language, root, template, page);
+        await renderPage(App, i18n, language, root, template, page);
 
         console.log(`rendered: ${language} ${page.path}  time: ${Date.now() - now}`);
       } catch (err) {

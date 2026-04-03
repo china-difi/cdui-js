@@ -49,11 +49,18 @@ export const FormPage = () => {
     ],
     a: 1,
     b: 2,
+
+    form: {
+      username: ''
+    }
   });
 
   let form: FormApi;
 
+  let form2: FormApi
+
   return (
+    <>
     <Form data={state} rules={{}} align={state.align} labelWidth={state.labelWidth} api={(api) => (form = api)}>
       <For each={state.items}>
         {(item) => (
@@ -92,5 +99,17 @@ export const FormPage = () => {
         clearErrors
       </button>
     </Form>
+
+    <Form data={state.form} rules={{}}  api={(api) => (form2 = api)}>
+      <FormItem label="username" required field='username'>
+        <input value={state.form.username} onchange={e => state.form.username = e.target.value} />
+      </FormItem>
+    </Form>
+
+    <button onclick={async() => {
+      const valid = await form2.validate()
+      console.log(valid)
+    }}>click</button>
+    </>
   );
 };

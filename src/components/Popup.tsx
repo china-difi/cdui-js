@@ -1,7 +1,8 @@
 import { JSX } from '../jsx';
 import { layout } from '../layout';
-import { omitProps } from '../reactive';
+import { omitProps, onMount } from '../reactive';
 import { disableAutoCloseEvent, hideMaskLayer, registerAutoClose, showMaskLayer } from '../dom';
+import { createRoot } from 'solid-js';
 
 const POPUP_TOP_CLASS = 'popup-top';
 const POPUP_RIGHT_CLASS = 'popup-right';
@@ -75,7 +76,7 @@ const showPopup = (dom: HTMLElement, onPopup?: (dom: HTMLElement) => void | fals
   let host = dom.parentNode as HTMLElement;
 
   // 先显示
-  style.width = host.offsetWidth + 'px';
+  // style.width = host.offsetWidth + 'px';
   style.height = 'auto';
   style.display = 'block';
 
@@ -85,7 +86,7 @@ const showPopup = (dom: HTMLElement, onPopup?: (dom: HTMLElement) => void | fals
   let rect = host.getBoundingClientRect();
 
   // 同步子组件宽度
-  style.width = width + 'px';
+  // style.width = width + 'px';
 
   if (windowHeight - rect.top - rect.height < height + 4 && rect.top >= height) {
     classList.add(POPUP_TOP_CLASS);
@@ -195,13 +196,15 @@ export const Popup = (props?: JSX.HTMLAttributes<never> & PopupProps) => {
 
   // 初始化外部调用接口
   props.api &&
-    props.api({
-      get popup() {
-        return currentPopup.dom === popup;
-      },
-      openPopup: () => showPopup(popup, props.onPopup),
-      closePopup: () => currentPopup.dom === popup && hidePopup(),
-      togglePopup: () => togglePopup(popup, props.onPopup),
+    onMount(() => {
+      props.api({
+        get popup() {
+          return currentPopup.dom === popup;
+        },
+        openPopup: () => showPopup(popup, props.onPopup),
+        closePopup: () => currentPopup.dom === popup && hidePopup(),
+        togglePopup: () => togglePopup(popup, props.onPopup),
+      });
     });
 
   return (

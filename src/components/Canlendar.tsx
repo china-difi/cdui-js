@@ -1,8 +1,29 @@
 import { JSX } from '../jsx';
-import { createSignal, combineClass, omitProps } from '../reactive';
-import { Canleandar as i18n } from '../i18n';
+import { createSignal, combineClass, omitProps, render } from '../reactive';
+import { Canlendar as i18n } from '../i18n';
 import { replaceTemplate } from '../template';
+
 import { For } from './For';
+import { MonthWidget } from './MonthWidget';
+
+export const parseDate = (value: Date | string | number) => {
+  if (value) {
+    switch (typeof value) {
+      case 'number':
+        return new Date(value);
+
+      case 'string':
+        return new Date(value.replace(/\//g, '-'));
+
+      default:
+        return value;
+    }
+  }
+};
+
+export const getYearMonth = (date: Date) => {
+  return [date.getFullYear(), date.getMonth() + 1] as const;
+};
 
 // 渲染日期项
 const renderDates = (
@@ -16,9 +37,9 @@ const renderDates = (
   selectedValue?: Date,
   disableFn?: (year: number, month: number, date: number) => boolean,
 ) => {
-  let today = todayValue.getFullYear() === year && todayValue.getMonth() === month ? todayValue.getDate() : -1;
+  let today = todayValue.getFullYear() === year && todayValue.getMonth() + 1 === month ? todayValue.getDate() : -1;
   let selected =
-    selectedValue && selectedValue.getFullYear() === year && selectedValue.getMonth() === month
+    selectedValue && selectedValue.getFullYear() === year && selectedValue.getMonth() + 1 === month
       ? selectedValue.getDate()
       : -1;
 
@@ -26,7 +47,7 @@ const renderDates = (
     items.push(
       `<span class="datewidget-item${className}${today === i ? ' today' : ''}${selected === i ? ' selected' : ''}${
         disableFn && disableFn(year, month, i) ? ' disabled' : ''
-      }" data-date="${year + '|' + month + '|' + i}">${i}</span>`,
+      }" data-day="${year + '|' + month + '|' + i}">${i}</span>`,
     );
   }
 };
@@ -74,14 +95,14 @@ const renderNextMonthItems = (
 };
 
 const renderItems = (
-  currentValue: Date,
+  currentValue: readonly [year: number, month: number],
   selectedValue?: Date,
   disableFn?: (year: number, month: number, date: number) => boolean,
 ) => {
   let today = new Date();
-  let year = currentValue.getFullYear();
-  let month = currentValue.getMonth();
-  let firstDate = new Date(year, month, 1); // 获取当前月的第一天
+  let year = currentValue[0];
+  let month = currentValue[1];
+  let firstDate = new Date(year, month - 1, 1); // 获取当前月的第一天
 
   let firstWeek = firstDate.getDay();
   let items = [];
@@ -95,55 +116,69 @@ const renderItems = (
   }
 
   // 获取当前月的天数
-  days = new Date(year, month + 1, 0).getDate();
+  days = new Date(year, month, 0).getDate();
+
   // 渲染本月日期
   renderDates(items, year, month, 1, days, '', today, selectedValue, disableFn);
 
   // 当前月最后一天没有占满，渲染下月数据
   if ((index += days) < 42) {
-    renderNextMonthItems(items, year, month, 42 - index, today, selectedValue, disableFn);
+    renderNextMonthItems(items, year, month + 1, 42 - index, today, selectedValue, disableFn);
   }
 
   return items.join('');
 };
 
-const switchMonth = (value: Date, offset: 1 | -1) => {
-  let date = new Date(value.getTime());
-  let month = value.getMonth();
+const switchMonth = (value: readonly [year: number, month: number], offset: 1 | -1) => {
+  let year = value[0];
+  let month = value[1] + offset;
 
-  date.setMonth(month + offset);
-
-  return date;
-};
-
-export const parseDate = (value: Date | string | number) => {
-  if (value) {
-    switch (typeof value) {
-      case 'number':
-        return new Date(value);
-
-      case 'string':
-        return new Date(value.replace(/\//g, '-'));
-
-      default:
-        return value;
-    }
+  if (month > 12) {
+    year++;
+    month = 1;
+  } else if (!month) {
+    year--;
+    month = 12;
   }
+
+  return [year, month] as const;
 };
 
-const formatMonth = (value: Date) => {
-  let month = value.getMonth() + 1;
-
+const formatMonth = (month: number) => {
   return month > 9 ? month : '0' + month;
 };
 
-const OMIT_PROPS = ['class', 'value', 'onValueChange', 'disableFn'] as const;
+const showMonthWidget = (dom: HTMLElement, setCurrentValue: (value) => void, selectedValue?: Date) => {
+  let value =
+    selectedValue && ([selectedValue.getFullYear(), selectedValue.getMonth() + 1] as [year: number, month: number]);
+
+  render(
+    () => (
+      <MonthWidget
+        value={value}
+        style={{ position: 'absolute', top: '0', left: '0', width: '100%', border: 'none' }}
+        onchange={(event) => {
+          let result = event.detail;
+
+          dom.removeChild(event.target as HTMLElement);
+
+          if (!selectedValue || result[0] !== value[0] || result[1] !== value[1]) {
+            setCurrentValue(result);
+          }
+        }}
+      ></MonthWidget>
+    ),
+    dom,
+  );
+};
+
+const OMIT_PROPS = ['class', 'value', 'disableFn'] as const;
 
 /**
  * 日历组件
  */
 export const Canlendar = (
-  props: Omit<JSX.HTMLAttributes<never>, 'children'> & {
+  props: Omit<JSX.HTMLAttributes<never>, 'children' | 'onchange'> & {
     /**
      * 日期值
      */
@@ -151,24 +186,27 @@ export const Canlendar = (
     /**
      * 值变更事件
      */
-    onValueChange?: (value: Date) => void;
+    onchange?: (event: CustomEvent<Date>) => void;
     /**
      * 禁用函数
      */
     disableFn?: (year: number, month: number, date: number) => boolean;
   },
 ) => {
-  let domTitle: HTMLElement;
-  let domBody: HTMLElement;
+  let dom: HTMLElement;
 
   const [selectedValue, setSelectedValue] = createSignal(parseDate(props.value));
-  const [currentValue, setCurrentValue] = createSignal(selectedValue() || new Date());
+  const [currentValue, setCurrentValue] = createSignal(getYearMonth(selectedValue() || new Date()));
 
   return (
-    <div class={combineClass('canlendar datewidget', props.class)} {...omitProps(props, OMIT_PROPS)}>
+    <div
+      ref={dom as any}
+      class={combineClass('canlendar datewidget', props.class)}
+      {...(omitProps(props, OMIT_PROPS) as any)}
+    >
       <div class="datewidget-header canlendar-header">
-        <div ref={domTitle as any} class="datewidget-title">
-          {replaceTemplate(i18n.Title, currentValue().getFullYear(), formatMonth(currentValue()))}
+        <div class="datewidget-title" onclick={() => showMonthWidget(dom, setCurrentValue, selectedValue())}>
+          {replaceTemplate(i18n.Title, currentValue()[0], formatMonth(currentValue()[1]))}
         </div>
         <svg class="icon icon-s" aria-hidden={true} onclick={() => setCurrentValue(switchMonth(currentValue(), -1))}>
           <use href="#icon-backward"></use>
@@ -181,21 +219,26 @@ export const Canlendar = (
         <For each={i18n.Weeks}>{(item) => <span>{item}</span>}</For>
       </div>
       <div
-        ref={domBody as any}
         class="datewidget-body canlendar-body"
         onclick={(event) => {
           let target = event.target as HTMLElement;
-          let date;
+          let day;
 
-          while (target && target !== domBody) {
-            if ((date = target.dataset.date)) {
+          while (target && target !== dom) {
+            if ((day = target.dataset.day)) {
               // 没有选中
               if (!target.classList.contains('selected')) {
-                date = date.split('|');
-                date = new Date(date[0] | 0, date[1] | 0, date[2] | 0);
+                day = day.split('|');
+                day = new Date(day[0] | 0, (day[1] | 0) - 1, day[2] | 0);
 
-                setSelectedValue(date);
-                props.onValueChange && props.onValueChange(date);
+                setSelectedValue(day);
+
+                dom.dispatchEvent(
+                  new CustomEvent('change', {
+                    detail: day,
+                    bubbles: true, // 允许事件冒泡
+                  }),
+                );
               }
 
               break;

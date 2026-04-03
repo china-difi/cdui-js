@@ -26,7 +26,9 @@ export * from './components/Form';
 export * from './components/CollapsiblePanel';
 export * from './components/Carousel';
 export * from './components/KeepAlive';
-export * from './components/Popup';
-export * from './components/Dialog';
+// export * from './components/Popup';
+
+export * from './popup';
+export * from './dialog';
 
 export * from './ssr/render';

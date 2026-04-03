@@ -1,58 +1,38 @@
 import { JSX } from '../jsx';
-import { combineClass, createSignal, omitProps } from '../reactive';
+import { combineClass, createSignal, omitProps, render } from '../reactive';
 import { disableAutoCloseEvent } from '../dom';
-import { For } from './For';
 import { Popup, PopupApi } from './Popup';
-import { parseDate } from './Canlendar';
+import { Canlendar, parseDate } from './Canlendar';
 
 const formatDate = (date: Date, format: string) => {
   return date ? date.toLocaleString() : '';
 };
 
-const showPopup = () => {};
+const showCanlendar = (dom: HTMLElement) => {
+  let popup: PopupApi;
 
-const MobileTouchScroll = (props: { items: (number | string)[] }) => {
-  return (
-    <div>
-      <For each={props.items}>{(item) => <div>{item}</div>}</For>
-    </div>
+  render(
+    () => (
+      <Popup
+        api={(api) => {
+          popup = api;
+          api.openPopup();
+        }}
+      >
+        <Canlendar></Canlendar>
+      </Popup>
+    ),
+    dom,
   );
 };
 
-const formatMonth = (value: Date) => {
-  let month = value.getMonth() + 1;
-
-  return month > 9 ? month : '0' + month;
-};
-
-// const computeMobileList = (value: Date) => {
-//   let year = value.getFullYear();
-//   let month = value.getMonth() + 1;
-//   let date = value.getDate();
-
-//   return [
-//     year > 5 ? [year - 2, year - 1, year, year + 1, year + 2]: [1,2,3,4,5],
-//     [formatMonth(month - 2), ]
-//   ];
-// };
-
-// const MobileDatePicker = (yearList: number[], monthList: string[], dateList: string[]) => {
-//   return (
-//     <div>
-//       <MobileTouchScroll items={yearList}></MobileTouchScroll>
-//       <MobileTouchScroll items={monthList}></MobileTouchScroll>
-//       <MobileTouchScroll items={dateList}></MobileTouchScroll>
-//     </div>
-//   );
-// };
-
-const OMIT_PROPS = ['class', 'value', 'readonly', 'format', 'children'] as const;
+const OMIT_PROPS = ['class', 'value', 'readonly', 'format'] as const;
 
 /**
  * 日期选择组件
  */
 export const DatePicker = (
-  props?: JSX.HTMLAttributes<never> & {
+  props?: Omit<JSX.HTMLAttributes<never>, 'children' | 'onchange'> & {
     /**
      * 值
      */
@@ -65,28 +45,33 @@ export const DatePicker = (
      * 是否只读
      */
     readonly?: boolean;
+    /**
+     * 值变更事件
+     */
+    onchange?: (event: CustomEvent<Date>) => void;
+    /**
+     * 禁用函数
+     */
+    disableFn?: (year: number, month: number, date: number) => boolean;
   },
 ) => {
-  let popup: PopupApi;
+  let dom: HTMLElement;
 
   const [value, setValue] = createSignal(props.value && parseDate(props.value));
 
   return (
-    <div class={combineClass('datepicker', props.class)} {...omitProps(props, OMIT_PROPS)}>
+    <div ref={dom as any} class={combineClass('datepicker', props.class)} {...(omitProps(props, OMIT_PROPS) as any)}>
       <div class="datepicker-host" {...disableAutoCloseEvent}>
         <input
           class="datepicker-input"
           value={formatDate(value(), props.format)}
           readonly={props.readonly}
-          onclick={() => props.readonly && popup.togglePopup()}
+          onclick={() => props.readonly && showCanlendar(dom)}
         ></input>
-        <svg class="icon icon-s" aria-hidden={true} onclick={() => popup.togglePopup()}>
+        <svg class="icon icon-s" aria-hidden={true} onclick={() => showCanlendar(dom)}>
           <use href="#icon-dropdown"></use>
         </svg>
       </div>
-      <Popup api={(api) => (popup = api)} onPopup={() => showPopup()}>
-        {props.children}
-      </Popup>
     </div>
   );
 };
