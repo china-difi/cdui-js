@@ -19,7 +19,7 @@ for (let i = 0; i < 1000000; i++) {
 
 console.log(performance.now() - now);
 
-const openDropdown = (align: HTMLElement) => {
+const openPopup = (align: HTMLElement) => {
   const popup = showPopup(<div style={{ padding: '100px 0', background: 'silver' }}>11111111111111111111</div>, {
     align,
     transition: true,
@@ -27,8 +27,13 @@ const openDropdown = (align: HTMLElement) => {
 };
 
 export const App = () => {
+  let refButton: HTMLElement;
+
   return (
     <div style={{ 'min-height': '100%' }}>
+      <button ref={refButton as any} onclick={() => openPopup(refButton)}>
+        dropdown
+      </button>
       <CarouselPage></CarouselPage>
       <CanlendarPage></CanlendarPage>
       <DatePickerPage></DatePickerPage>

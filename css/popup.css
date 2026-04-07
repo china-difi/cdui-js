@@ -20,6 +20,7 @@
 .popup-fixed-left > *,
 .popup-fixed-right > * {
   height: 100 !important;
+  max-height: 100% !important;
 }
 
 .popup-fixed-left {
@@ -41,6 +42,7 @@
 .popup-fixed-top > *,
 .popup-fixed-bottom > * {
   width: 100% !important;
+  max-width: 100% !important;
 }
 
 .popup-fixed-top {
