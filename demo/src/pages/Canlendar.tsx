@@ -7,7 +7,7 @@ export const CanlendarPage = () => {
     <div>
       <Canlendar
         value={new Date()}
-        onchange={(event) => {
+        onchange={(event) => {debugger
           console.log(event.detail);
         }}
       ></Canlendar>

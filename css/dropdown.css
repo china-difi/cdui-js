@@ -1,19 +1,14 @@
-.combobox {
-  position: relative;
-  width: 100px;
-  height: 32px;
-  overflow: visible;
-}
-
-.combobox-host {
+.combobox,
+.datepicker {
   display: flex;
   justify-content: center;
   align-items: center;
-  width: 100%;
-  height: 100%;
+  width: 120px;
+  height: 32px;
 }
 
-.combobox-input {
+.combobox-input,
+.datepicker-input {
   flex: auto;
   width: 100%;
   height: 100%;
@@ -26,7 +21,8 @@
   font-size: inherit;
 }
 
-.combobox-host > .icon {
+.combobox-icon,
+.datepicker-icon {
   display: flex;
   justify-items: center;
   align-items: center;

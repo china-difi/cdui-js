@@ -280,7 +280,7 @@ const reactiveObject = (object: object) => {
         signal[0]();
 
         // 值类型
-        if (typeof value !== 'object' || !value) {
+        if (typeof value !== 'object' || !value || value instanceof Date) {
           return value;
         }
 

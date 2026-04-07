@@ -3,7 +3,7 @@
   z-index: 9;
   /* 不允许边框和内边距，否则动画的高度不能小于内边距 */
   border: none !important;
-  padding: none !important;
+  padding: 0 !important;
   will-change: height;
   transition: height 0.2s linear;
   overflow: hidden;
@@ -13,7 +13,13 @@
 .popup-fixed-right {
   display: flex;
   align-items: center;
+  top: 0;
   height: 100%;
+}
+
+.popup-fixed-left > *,
+.popup-fixed-right > * {
+  height: 100 !important;
 }
 
 .popup-fixed-left {
@@ -28,7 +34,13 @@
 .popup-fixed-bottom {
   display: flex;
   justify-content: center;
+  left: 0;
   width: 100%;
+}
+
+.popup-fixed-top > *,
+.popup-fixed-bottom > * {
+  width: 100% !important;
 }
 
 .popup-fixed-top {

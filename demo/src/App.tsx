@@ -20,27 +20,20 @@ for (let i = 0; i < 1000000; i++) {
 console.log(performance.now() - now);
 
 const openDropdown = (align: HTMLElement) => {
-  const popup = showPopup(() => <div style={{ padding: '100px 0', background: 'silver' }}>11111111111111111111</div>, {
-    // align,
+  const popup = showPopup(<div style={{ padding: '100px 0', background: 'silver' }}>11111111111111111111</div>, {
+    align,
     transition: true,
   });
 };
 
 export const App = () => {
-  let ref;
-
   return (
     <div style={{ 'min-height': '100%' }}>
-      <div style={{ padding: '800px 0' }}>
-        <button ref={ref} onclick={() => openDropdown(ref)}>
-          click
-        </button>
-      </div>
-      {/* <CarouselPage></CarouselPage>
+      <CarouselPage></CarouselPage>
       <CanlendarPage></CanlendarPage>
       <DatePickerPage></DatePickerPage>
       <ComboBoxPage></ComboBoxPage>
-      <FormPage></FormPage> */}
+      <FormPage></FormPage>
     </div>
   );
 };

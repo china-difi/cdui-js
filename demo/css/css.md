@@ -283,18 +283,19 @@
 
 # combobox 下拉框
 
-.combobox { border: 1px solid #e4e4e4; background: white; }
+.combobox { border: 1px solid #e4e4e4; background: #ffffff; }
 .combobox:has(.combobox-input:focus) { border: 1px solid #1b212d; }
+.combobox-popup { border: 1px solid #e4e4e4; background: #ffffff; }
 
 
 # canlendar monthwidget yearwidget 日历 年月 年
 
-.datewidget { border: 1px solid #e4e4e4; }
+.datewidget { border: 1px solid #e4e4e4; background: #ffffff; }
 .datewidget-header > .icon { stroke: #1b212d; }
 .datewidget-item.disabled { color: #e4e4e4; }
 .datewidget-item.prev-block, .datewidget-item.next-block { color: #888f97; }
 .datewidget-item.today::before { background: #f5f5f5; }
-.datewidget-item.selected { color: white; }
+.datewidget-item.selected { color: #ffffff; }
 .datewidget-item.selected::before { background: #ff4000; }
 
 .canlendar-weeks > span { color: #888f97; }
@@ -302,17 +303,12 @@
 
 # datepicker 日期选择
 
-.datepicker { border: 1px solid #e4e4e4; background: white; }
+.datepicker { border: 1px solid #e4e4e4; background: #ffffff; }
 .datepicker:has(.datepicker-input:focus) { border: 1px solid #1b212d; }
-
-
-# popup 弹出层
-
-.popup { border: 1px solid #e4e4e4; background: white; }
 
 
 # carousel 轮播
 
 .carousel-backward, .carousel-forward { background: rgba(255, 255, 255, 0.1); }
 .carousel-dot { background: rgba(65, 72, 90, 1); }
-.carousel-dot.selected { background: white; }
+.carousel-dot.selected { background: #ffffff; }
