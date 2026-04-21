@@ -52,8 +52,10 @@ export const location: Location = reactive({
   query: {},
   paths: [],
   routeTo(url: string, scrollTo?: [number, number]) {
+    // 更新历史
     history.pushState(null, '', url || '');
-    routeTo();
+    // 不能立即取 window.location.pathname，在夸克等浏览取不到最新值
+    updateURL(url || '');
 
     if (isBrowser && scrollTo) {
       window.scrollTo(scrollTo[0] | 0, scrollTo[1] | 0);
@@ -89,47 +91,56 @@ export const parseQuery = (search: string) => {
 /**
  * 更新地址
  *
- * @param path 路径
- * @param search 查询条件
- * @param hash hash
+ * @param url 当前 url
  */
-export const updateURL = (path: string, search?: string, hash?: string) => {
-  location.url = path + (search || '') + (hash || '');
-  location.hash = hash || '';
+export const updateURL = (url: string) => {
+  if (location.url !== url || (url = '')) {
+    let path = url;
+    let search = '';
+    let hash = '';
+    let index;
 
-  if (location.path !== path || location.search !== search) {
+    if ((index = path.indexOf('#')) >= 0) {
+      hash = path.slice(index);
+      path = path.slice(0, index);
+    }
+
+    if ((index = path.indexOf('?')) >= 0) {
+      search = path.slice(index);
+      path = path.slice(0, index);
+    }
+
     batch(() => {
+      location.url = url;
+      location.hash = hash;
       location.path = path;
       location.paths = path.match(/\/[^/]*/g) || [];
-      location.search = search || '';
+      location.search = search;
       location.query = search ? parseQuery(search) : {};
     });
   }
 };
 
 // 浏览器环境
-const routeTo = isBrowser
-  ? (() => {
-      // 更新地址方法
-      const routeTo = () => {
-        let system = window.location;
+if (isBrowser) {
+  (() => {
+    // 更新地址方法
+    const routeTo = () => {
+      let system = window.location;
+      updateURL(system.pathname + system.search + system.hash);
+    };
 
-        updateURL(system.pathname, system.search, system.hash);
-      };
+    // 立即更新
+    routeTo();
 
-      // 立即更新
-      routeTo();
-
-      // 侦听地址变化
-      window.addEventListener('popstate', () => routeTo(), true);
-      // window.addEventListener(
-      //   'hashchange',
-      //   () => {
-      //     location.hash = '';
-      //   },
-      //   true,
-      // );
-
-      return routeTo;
-    })()
-  : () => {};
+    // 侦听地址变化
+    window.addEventListener('popstate', () => routeTo(), true);
+    // window.addEventListener(
+    //   'hashchange',
+    //   () => {
+    //     location.hash = '';
+    //   },
+    //   true,
+    // );
+  })();
+}

@@ -6,7 +6,7 @@ export const CanlendarPage = () => {
   return (
     <div>
       <Canlendar
-        value={new Date()}
+        value="2026-04-04"
         onchange={(event) => {debugger
           console.log(event.detail);
         }}

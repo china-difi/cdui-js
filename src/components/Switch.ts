@@ -21,8 +21,8 @@ export const Switch = (props: SwitchProps) => {
   let disposes = {};
 
   onCleanup(() => {
-    for (let key in disposes) {
-      disposes[key]();
+    for (let id in disposes) {
+      disposes[id]();
     }
 
     roots = disposes = null;
