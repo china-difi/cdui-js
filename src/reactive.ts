@@ -1,6 +1,4 @@
-import { Component, createEffect, createSignal, createUniqueId, lazy, splitProps } from 'solid-js';
-
-const getOwnPropertyNames = Object.getOwnPropertyNames;
+import { createEffect, createSignal, createUniqueId, splitProps } from 'solid-js';
 
 export const defineProperty = Object.defineProperty;
 export const defineProperties = Object.defineProperties;
@@ -9,18 +7,19 @@ export const isArray = Array.isArray;
 
 export {
   type JSX,
+  batch,
   children,
   createComponent,
   createEffect,
   createMemo,
   createContext,
   createSignal,
-  useContext,
-  splitProps,
+  lazy,
   onMount,
   onCleanup,
+  splitProps,
   untrack,
-  batch,
+  useContext,
 } from 'solid-js';
 
 export { hydrate, render } from 'solid-js/web';
@@ -494,17 +493,4 @@ export const createFetcher = <T>(asyncLoad: () => Promise<T>, ssr_cache?: string
       },
     },
   ) as unknown as FetcherResult<T>;
-};
-
-/**
- * 延迟加载组件
- *
- * @param importFn 按需导入的组件 import('...')
- */
-export const LazyComponent = (
-  importFn: () => Promise<{
-    default: Component<any>;
-  }>,
-) => {
-  return lazy(importFn);
 };

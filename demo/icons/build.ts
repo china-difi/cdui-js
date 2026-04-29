@@ -15,3 +15,4 @@ const icons = [
 ];
 
 saveIconsToHtml(path.join(__dirname, '../index.html'), icons.join('\n'));
+// saveIconsModule(path.join(__dirname, '../icons.ts'), icons.join('\n'));

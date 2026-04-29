@@ -106,7 +106,7 @@ export const saveIconsToHtml = (htmlFile: string, symbols: string) => {
 export const saveIconsModule = (moduleFile: string, symbols: string) => {
   fs.writeFileSync(
     moduleFile,
-    `import { loadSvgIcons } from 'cdui-js';
+    `import loadSvgIcons from 'cdui-js/build/load-svg-icons';
 
 loadSvgIcons(\`${symbols}\`);
 `,

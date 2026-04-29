@@ -1,6 +1,6 @@
 {
   "name": "cdui-js",
-  "version": "1.0.27",
+  "version": "1.0.29",
   "type": "module",
   "main": "src/index.ts",
   "bin": {
@@ -8,6 +8,7 @@
   },
   "scripts": {
     "dev": "vite --config demo/vite.config.ts",
+    "build": "vite build --config demo/vite.config.ts",
     "icons": "npx tsx demo/icons/build.ts",
     "css": "npx tsx demo/css/build.ts"
   },
